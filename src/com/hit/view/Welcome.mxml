@@ -1,0 +1,476 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group creationComplete="loaded();"
+		 mouseMove="application1_mouseMoveHandler(event)"
+		 xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" 
+		 minWidth="955" 
+		 minHeight="600" 
+		 xmlns:local="*" 
+		 width="739">
+	<s:layout>
+		<s:BasicLayout/>
+	</s:layout>
+	
+	<fx:Script>
+		<![CDATA[
+			import flash.utils.setTimeout;
+			
+			import mx.controls.Alert;
+			import mx.core.SoundAsset;
+			import mx.effects.Fade;
+			import mx.effects.Move;
+			import mx.effects.SoundEffect;
+			import mx.effects.Zoom;
+			import mx.events.FlexEvent;
+			
+
+			
+// -------------------------	成	员	变	量		---------------------------------------------------------------------------------------
+			
+			/**		放大缩小的对象		*/
+			private var zoom:Zoom = new Zoom();
+			
+			/**		播放音效的sound对象		*/
+			private var _sound:SoundEffect = new SoundEffect(this);
+			
+			
+			
+// --------------------------	成	员	方	法		-----------------------------------------------------------
+			
+			
+			/**		放大对象，从0倍，到1倍大小	@param obj:要放大的可视对象		*/
+			private function zoomInDisplayObject(obj:DisplayObject):void{
+				
+				zoom.zoomHeightFrom = 0;
+				zoom.zoomHeightTo = 1;
+				zoom.zoomWidthFrom = 0;
+				zoom.zoomWidthTo = 1;
+				zoom.originX = obj.width/2.0;
+				zoom.originY = obj.height/2.0;
+				zoom.target = obj;
+				zoom.duration = 500;
+				if(!zoom.isPlaying)
+					zoom.play();
+								
+				// 播放刷的一声
+				this._sound.source = "sounds/最大化.mp3";
+				this._sound.play();
+				
+			}
+			
+			/**		缩小对象，还原到原来的大小		@param obj:要还原缩小的可视对象	*/
+			private function zoomOutDisplayObject(obj:DisplayObject):void{
+				
+				zoom.zoomHeightFrom = 1;
+				zoom.zoomHeightTo = 0;
+				zoom.zoomWidthFrom = 1;
+				zoom.zoomWidthTo = 0;
+				zoom.originX = obj.width/2.0;
+				zoom.originY = obj.height/2.0;
+				zoom.duration = 500;
+				zoom.target = obj;
+				if(!zoom.isPlaying)
+					zoom.play();
+				
+				// 播放刷的一声
+				this._sound.source = "sounds/最小化.mp3";
+				this._sound.play();
+			}
+			
+			/**		隐藏本窗体的欢迎页面层		*/
+			private function hideWelcome():void{
+				this.groWelcome.visible = false;
+								
+//				this.visible = false;
+				// 播放声音文件
+				MainProgram._ctrlSound = MainProgram._musicSound.play(0,9999999999999);
+			}
+			
+			/**		隐藏本窗体			*/
+			private function hideForm():void{
+				var z:Zoom = new Zoom(this);
+				z.zoomHeightFrom = 1;
+				z.zoomHeightTo = 0.06;
+				z.zoomWidthFrom = 1;
+				z.zoomWidthTo = 0.17;
+				z.originX = this.width/2.0;
+				z.originY = this.height/2.0;
+				z.duration = 1000;
+				z.play();
+				
+				var m:Move = new Move(this);
+				m.xTo = 563;
+				m.yTo = 549;
+				m.duration = 1000;
+				m.play();
+				
+				var fade:Fade = new Fade(this);
+				fade.alphaTo = 0;
+				fade.duration = 1500;
+				fade.play();
+				
+				// 播放刷的一声
+				this._sound.source = "sounds/最大化.mp3";
+				this._sound.play();
+				
+				// 停止播放声音
+				MainProgram._ctrlSound.stop();
+				// 重新选择要播放的声音文件
+				MainProgram._musicSound = new Sound(new URLRequest("sounds/苏格兰风笛.mp3"));
+				MainProgram._musicSound.play(0,99999999);
+				
+				// 等待效果完成后，隐藏窗体的visible
+				setTimeout(function():void{visible=false;},1000);
+				
+			}
+			
+			/**		加载完毕完成后			*/
+			protected function loaded():void
+			{
+				// TODO Auto-generated method stub
+				
+				this._sound.duration = 60*60;
+				
+				Mouse.hide();
+			}
+			
+			
+			
+// ----------------------	相	关	事	件		--------------------------------------------------------------------------
+			
+			
+			
+			/**		鼠标移动到进入游戏按钮上，放大	*/
+			protected function entergame_mouseOverHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+								
+				zoom.zoomHeightFrom = 1;
+				zoom.zoomHeightTo = 1.5;
+				zoom.zoomWidthFrom = 1;
+				zoom.zoomWidthTo = 1.5;
+				zoom.originX = this.entergame.width/2.0;
+				zoom.originY = this.entergame.height/2.0;
+				zoom.target = this.entergame;
+				zoom.duration = 500;
+				if(!zoom.isPlaying)
+					zoom.play();
+				
+			}
+			
+			/**		鼠标移出进入游戏按钮上时，缩小还原			*/
+			protected function entergame_mouseOutHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				
+				zoom.zoomHeightFrom = 1.5;
+				zoom.zoomHeightTo = 1;
+				zoom.zoomWidthFrom = 1.5;
+				zoom.zoomWidthTo = 1;
+				zoom.originX = this.entergame.width/2.0;
+				zoom.originY = this.entergame.height/2.0;
+				zoom.duration = 500;
+				zoom.target = this.entergame;
+				if(!zoom.isPlaying)
+					zoom.play();
+			}
+				
+			/**		鼠标在窗体中移动的事件		*/
+			protected function application1_mouseMoveHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				this.cursor.x = event.stageX+5;
+				this.cursor.y = event.stageY+5;
+				
+			}
+			
+			/**		单击进入游戏按钮时，，隐藏欢迎页面  显示模式选择页面层			*/
+			protected function entergame_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				
+				this._sound.source = "sounds/copy.mp3";
+				this._sound.play();
+				// 设置，模式选择层，淡出
+				var fade:Fade = new Fade(this.groMode);
+				fade.alphaFrom = 0;
+				fade.alphaTo = 1;
+				fade.duration = 2000;
+				fade.play();
+				
+				// 等待窗体全部隐藏起来了，调用hideForm方法
+				setTimeout(hideWelcome,2000);
+				
+				// 显示模式选择页面层
+				this.groMode.visible=true;
+				
+			}
+						
+			/**		鼠标移动到经典模式上，更换图片 		*/
+			protected function image1_mouseOverHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				
+				var img:Image = event.currentTarget as Image;
+				img.source = "images/经典模式_蓝.png";
+				
+				// 播放声音
+				this._sound.source = "sounds/水滴声.mp3";
+				this._sound.play();
+			}
+
+			/**		鼠标移出经典模式，更换图片 		*/
+			protected function image1_mouseOutHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				
+				var img:Image = event.currentTarget as Image;
+				img.source = "images/经典模式_灰.png";
+			}
+
+			/**		单击经典模式		显示难度选择		*/
+			protected function image1_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				
+				this.groDifficulty.visible = true;
+				
+				this.modeselected.source = "images/经典模式_蓝.png";
+				
+				this.zoomInDisplayObject(this.groDifficulty);
+			}
+
+			/**		鼠标移动到现代模式图片上		*/
+			protected function image2_mouseOverHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				
+				var img:Image = event.currentTarget as Image;
+				img.source = "images/现代模式_蓝.png";
+				
+				// 播放声音
+				this._sound.source = "sounds/水滴声.mp3";
+				this._sound.play();
+			}
+
+			/**		鼠标移出现在模式图片上		*/
+			protected function image2_mouseOutHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+								
+				var img:Image = event.currentTarget as Image;
+				img.source = "images/现代模式_灰.png";
+			}
+			
+			/**		鼠标点击现代模式按钮时，显示难度选择菜单		*/
+			protected function image2_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				
+				this.groDifficulty.visible = true;
+				
+				this.modeselected.source = "images/现代模式_蓝.png";
+				
+				this.zoomInDisplayObject(this.groDifficulty);
+			}
+			
+			/**		鼠标移动入，上一页图片，图片变亮			*/
+			protected function image3_mouseOverHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				(event.currentTarget as Image).source = "images/上一页亮.png";
+				
+				// 播放声音
+				this._sound.source = "sounds/水滴声.mp3";
+				this._sound.play();
+			}
+
+			/**		鼠标移动出，上一页图片，图片 变暗		*/
+			protected function image3_mouseOutHandler(event:MouseEvent):void{
+				// TODO Auto-generated method stub				
+				(event.currentTarget as Image).source = "images/上一页暗.png";
+			}
+
+			/**		隐藏难度选择菜单		*/
+			protected function image3_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				
+				this.modeselected.source = "images/modeselect.png";
+				
+				this.zoomOutDisplayObject(this.groDifficulty);
+			}
+
+			/**		简单按钮   变蓝		*/
+			protected function image4_mouseOverHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				
+				(event.currentTarget as Image).source = "images/简单_蓝.png";
+				
+				// 播放声音
+				this._sound.source = "sounds/水滴声.mp3";
+				this._sound.play();
+			}
+
+			/**		简单按钮	变灰		*/
+			protected function image4_mouseOutHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				
+				(event.currentTarget as Image).source = "images/简单_灰.png";
+				
+				// 播放声音
+				this._sound.source = "sounds/水滴声.mp3";
+				this._sound.play();
+			}
+
+			/**		普通按钮	变蓝			*/
+			protected function image5_mouseOverHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+								
+				(event.currentTarget as Image).source = "images/普通_蓝.png";
+				
+				// 播放声音
+				this._sound.source = "sounds/水滴声.mp3";
+				this._sound.play();
+			}
+
+			/**		普通按钮	变灰		*/
+			protected function image5_mouseOutHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				
+				(event.currentTarget as Image).source = "images/普通_灰.png";
+				
+				// 播放声音
+				this._sound.source = "sounds/水滴声.mp3";
+				this._sound.play();
+			}
+
+			/**		冷酷按钮	变蓝		*/
+			protected function image6_mouseOverHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				
+				(event.currentTarget as Image).source = "images/冷酷_蓝.png";
+				
+				// 播放声音
+				this._sound.source = "sounds/水滴声.mp3";
+				this._sound.play();
+			}
+
+			/**		冷酷按钮变灰		*/
+			protected function image6_mouseOutHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				
+				(event.currentTarget as Image).source = "images/冷酷_灰.png";
+				
+				// 播放声音
+				this._sound.source = "sounds/水滴声.mp3";
+				this._sound.play();
+			}
+
+			/**		设置游戏难度，简单型的		*/
+			protected function image4_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				Hit._difficulty = "easy";
+				
+				/**		隐藏窗体		*/
+				this.hideForm();
+			}
+
+			/**		设置游戏难度，普通型的			*/
+			protected function image5_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				Hit._difficulty = "normal";
+				
+				/**		隐藏窗体		*/
+				this.hideForm();
+			}
+
+			/**		设置游戏难度，困难型的		*/
+			protected function image6_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				Hit._difficulty = "difficulty";
+				
+				/**		隐藏窗体		*/
+				this.hideForm();
+			}
+
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	
+	
+	<!--	欢迎界面的桌布背景	-->
+	<s:Group id="groWelcome" width="739" height="600">
+		<mx:Image source="images/welcomebg.png" x="0" y="0" maintainAspectRatio="false" width="739" height="600" />	
+		<mx:Image source="swf/眨眼睛.swf" x="505" y="166" width="200" height="200"/>
+		<!--	进入游戏图片按钮		-->
+		<mx:Image id="entergame" source="images/entergame.png"  x="255" y="449"
+				  maintainAspectRatio="false" 
+				  mouseOver="entergame_mouseOverHandler(event)"
+				  mouseOut="entergame_mouseOutHandler(event)"
+				  click="entergame_clickHandler(event)"/>					
+	</s:Group>
+	
+	<!--	模式选择 容器   GroupBox	-->
+	<s:Group id="groMode" width="739" height="600" visible="false">
+		<mx:Image source="images/modebg.jpg" maintainAspectRatio="false" width="739" height="600" />
+		<!--	模式选择图片		-->
+		<mx:Image id="modeselected" source="images/modeselect.png" x="214" y="54" 
+				  maintainAspectRatio="false" height="89" width="311"/>
+		<!--	经典模式图片按钮			-->
+		<mx:Image source="images/经典模式_灰.png" x="307" y="313" 
+				  mouseOver="image1_mouseOverHandler(event)"
+				  mouseOut="image1_mouseOutHandler(event)" 
+				  click="image1_clickHandler(event)"/>
+		<!--	现代模式图片按钮 			-->
+		<mx:Image source="images/现代模式_灰.png" x="307" y="403" 
+				  mouseOver="image2_mouseOverHandler(event)"
+				  mouseOut="image2_mouseOutHandler(event)" 
+				  click="image2_clickHandler(event)"/>
+		
+		<!--	难度选择 容器，层			-->
+		<s:Group id="groDifficulty" x="157" y="157" width="412" height="416" visible="false">
+			<mx:Image source="images/难度选择.png" x="33" y="15" width="346" height="390"/>
+			<!--	简单模式图片按钮		-->
+			<mx:Image source="images/简单_灰.png" x="149" y="109"
+					  mouseOver="image4_mouseOverHandler(event)" 
+					  mouseOut="image4_mouseOutHandler(event)" 
+					  click="image4_clickHandler(event)"/>
+			<!--	普通模式图片按钮		-->
+			<mx:Image source="images/普通_灰.png" x="149" y="178"
+					  mouseOver="image5_mouseOverHandler(event)"
+					  mouseOut="image5_mouseOutHandler(event)" 
+					  click="image5_clickHandler(event)"/>
+			<!--	冷酷模式图片按钮		-->
+			<mx:Image source="images/冷酷_灰.png" x="149" y="248" 
+					  mouseOver="image6_mouseOverHandler(event)" 
+					  mouseOut="image6_mouseOutHandler(event)" 
+					  click="image6_clickHandler(event)"/>
+			<!--	返回上一页图片按钮		-->
+			<mx:Image source="images/上一页暗.png" x="98" y="341" height="47" width="72" 
+					  maintainAspectRatio="false" 
+					  mouseOver="image3_mouseOverHandler(event)" 
+					  mouseOut="image3_mouseOutHandler(event)"
+					  click="image3_clickHandler(event)"/>
+		</s:Group>
+		
+	</s:Group>
+	
+	<!--	难度选择	-->		
+	
+	<!--	鼠标指针	-->
+	<mx:Image id="cursor" source="swf/cursor_tool.swf" x="352" y="371" visible="true"/>
+</s:Group>

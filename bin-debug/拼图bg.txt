@@ -1,0 +1,17 @@
+
+
+
+	<mx:Image source="images/1.png" width="500" maintainAspectRatio="false" z="0"   x="0" y="120"/>
+	<mx:Image source="images/2.png" width="502" maintainAspectRatio="false" z="2" y="293"  x="-1"/>
+	<mx:Image source="images/3.png" width="506" maintainAspectRatio="false" z="4"   x="-2" y="348"/>
+	<mx:Image source="images/4.png" width="506" maintainAspectRatio="false" z="6"   x="-2" y="407"/>
+	<mx:Image source="images/5.png" width="506" maintainAspectRatio="false" z="8"   x="-1" y="466"/>
+	<mx:Image source="images/6.png" width="509" maintainAspectRatio="false" z="10"   x="-4" y="526"/>
+	
+	
+	
+	
+	
+	// 锤子和砰	
+	<mx:Image id="cursor" source="images/cursor.gif"  x="0" y="0"/>
+	<mx:Image id="put" source="swf/put.swf" visible="false" />

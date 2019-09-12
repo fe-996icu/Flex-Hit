@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application creationComplete="loaded();"
+			   xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" 
+			   minWidth="955" 
+			   minHeight="600" 
+			   xmlns:local="*" 
+			   width="739" 
+			   xmlns:view="com.hit.view.*">
+	<s:layout>
+		<s:BasicLayout/>
+	</s:layout>
+
+	<fx:Script>
+		<![CDATA[
+			import com.hit.view.Hit;
+			import com.hit.view.RightTools;
+			import com.hit.view.Welcome;
+			
+			import flash.utils.setTimeout;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.effects.Fade;
+			import mx.effects.Move;
+			import mx.effects.Rotate;
+			import mx.effects.Sequence;
+			import mx.events.FlexEvent;
+			
+			
+// -----------------------		成	员	变	量		---------------------------------------------------------------------
+
+			/**		Hit类的实例		*/
+			public var _hit:Hit = new Hit();
+			
+			/**		右侧工具栏的实例		*/
+			private var _rightTools:RightTools = new RightTools();
+
+			/**		欢迎页面的实例		*/
+			private var _welcome:Welcome = new Welcome();
+			
+			/**		控制欢迎页面的zoom			*/
+			private var _fade:Fade = new Fade();
+			
+			/**		声音播放那个对象Sound		*/
+			public static var _musicSound:Sound = null;
+			
+			/**		声音控制对象 SoundChannel		*/
+			public static var _ctrlSound:SoundChannel = new SoundChannel();
+			
+			/**		音乐播放到了多少秒		*/
+			public static var _playTime:Number = 0;
+			
+			
+// ---------------------------		成	员	方	法		------------------------------------------------------------------
+			
+			
+			/**		加载欢迎页面		*/
+			private function startWelcome():void{
+				this._fade.alphaFrom = 0;
+				this._fade.alphaTo = 1;
+				this._fade.target = this._welcome;
+				this._fade.duration = 3000;
+				this._fade.play();
+				
+				// 为欢迎页面，绑定事件，当窗体隐藏时，出发事件
+//				this._welcome.addEventListener(FlexEvent.HIDE,welcome_EventHide);
+				// 添加到主程序中
+				this.addElement(this._welcome);
+				
+				
+				// 隐藏其他的窗体
+				this.groGame.visible = false;
+				this.groRightTools.visible = false;
+				
+				setTimeout(setTimeShowGroup,3000);
+			}
+			
+			/**		定时设置两个容器的visible=true（显示游戏区域，显示工具栏）		*/
+			private function setTimeShowGroup():void{
+				// 隐藏其他的窗体
+				this.groGame.visible = true;
+				this.groRightTools.visible = true;				
+			}
+			
+			/**		欢迎界面隐藏式，触发的事件，			*/
+//			private function welcome_EventHide(event:FlexEvent):void{
+//
+//				this._fade.alphaFrom = 0;
+//				this._fade.alphaTo = 1;
+//				this._fade.targets = new Array(this.groGame,this.groRightTools);
+//				this._fade.duration = 3000;
+//				this._fade.play();
+//			}
+			
+			/**		窗体加载完毕事件			*/
+			protected function loaded():void
+			{
+				// TODO Auto-generated method stub
+
+				// 创建实例对象
+//				this._rightTools = new RightTools();
+//				this._hit = new Hit();
+
+				// 加载要播放的声音文件
+				MainProgram._musicSound = new Sound(new URLRequest("sounds/诡异.mp3"));
+								
+				// 设置实例引用对象
+				this._hit._rightTools = this._rightTools;
+				this._rightTools._hit = this._hit;
+								
+//				this._rightTools.loaded();
+				
+				// 将游戏页面添加到本页面中
+				this.groGame.addElement(_hit);
+				// 将工具栏添加到页面中
+				this.groRightTools.addElement(_rightTools);
+				
+				// 加载欢迎页面
+				this.startWelcome();
+				
+			}
+			
+		]]>
+	</fx:Script>
+
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	
+	
+	<s:Group id="groGame" x="0" y="0" width="500" height="600">		
+	</s:Group>
+	<s:Group id="groRightTools" x="500" y="0" width="240" height="600">		
+	</s:Group>
+	
+</s:Application>

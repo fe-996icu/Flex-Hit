@@ -1,0 +1,35 @@
+
+	<mx:Image id="bg" source="images/bg.jpg" width="500" height="600" maintainAspectRatio="false" z="0" />
+	
+	
+	<mx:Image source="images/mouse.png"  x="47" y="153" width="83" height="65"/>
+	<mx:Image source="images/mouse.png"  x="152" y="152" width="83" height="65"/>
+	<mx:Image source="images/mouse.png"  x="269" y="153" width="83" height="65"/>
+	<mx:Image source="images/mouse.png"  x="372" y="150" width="83" height="65"/>
+	
+	<mx:Image source="images/mouse.png"  x="38" y="218" width="83" height="65"/>
+	<mx:Image source="images/mouse.png"  x="147" y="218" width="83" height="65"/>
+	<mx:Image source="images/mouse.png"  x="262" y="219" width="83" height="65"/>
+	<mx:Image source="images/mouse.png"  x="368" y="220" width="83" height="65"/>
+
+
+	
+	<mx:Image source="images/mouse.png"  x="39" y="291" width="83" height="65"/>
+	<mx:Image source="images/mouse.png"  x="146" y="291" width="83" height="65"/>
+	<mx:Image source="images/mouse.png"  x="262" y="293" width="83" height="65"/>
+	<mx:Image source="images/mouse.png"  x="368" y="292" width="83" height="65"/>
+	
+	<mx:Image source="images/mouse.png"  x="45" y="363" width="83" height="65"/>
+	<mx:Image source="images/mouse.png"  x="152" y="363" width="83" height="65"/>
+	<mx:Image source="images/mouse.png"  x="269" y="367" width="83" height="65"/>
+	<mx:Image source="images/mouse.png"  x="375" y="366" width="83" height="65"/>
+	
+
+
+	<mx:Image source="images/mouse.png"  x="45" y="434" width="83" height="65"/>
+	<mx:Image source="images/mouse.png"  x="154" y="434" width="83" height="65"/>
+	<mx:Image source="images/mouse.png"  x="271" y="437" width="83" height="65"/>
+	<mx:Image source="images/mouse.png"  x="376" y="437" width="83" height="65"/>
+	
+	
+	

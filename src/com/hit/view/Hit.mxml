@@ -1,0 +1,1214 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group mouseMove="application_mouseMoveHandler(event)" 
+		 click="application_clickHandler(event)" 
+		 creationComplete="loaded();" 
+		 xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" 
+		 minWidth="955" 
+		 minHeight="600" 
+		 maxHeight="600" 
+		 maxWidth="500" 
+		 width="500">
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import flash.sampler.pauseSampling;
+			import flash.utils.clearInterval;
+			import flash.utils.clearTimeout;
+			import flash.utils.setInterval;
+			import flash.utils.setTimeout;
+			
+			import flashx.textLayout.formats.Float;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.effects.Fade;
+			import mx.effects.Move;
+			import mx.effects.Pause;
+			import mx.effects.Rotate;
+			import mx.effects.Sequence;
+			import mx.effects.SoundEffect;
+			import mx.effects.Zoom;
+			import mx.managers.PopUpManager;
+			import mx.skins.halo.ApplicationBackground;
+			import mx.utils.StringUtil;
+			
+//			import spark.components.supportClasses.DisplayLayer;
+			
+			
+			
+//----------------------	成	员	变	量	------------------------------------------------------------------------------------------------------------------------
+	
+			
+			/**		存放所有怪物的集合		*/
+			private var _monsterList:ArrayCollection = new ArrayCollection();
+			
+			/**		正在执行动画的怪物集合					*/
+			private var _curPlayMonster:ArrayCollection = new ArrayCollection();
+			
+			/**		存放正在执行过程的组合效果对象（Sequence）		*/
+			private var _curPlayList:ArrayCollection = new ArrayCollection();
+			
+			/**		右侧工具栏的实例			*/
+			public var _rightTools:RightTools = null;
+			
+			/**		开始、暂停  游戏的   setInterval()  		*/
+			private var _gameProcess:uint;
+			
+			/**		怪物移动出来的的Move对象		*/			
+			private var _moveEmerge:Move = new Move();
+			
+			/**		怪物移动出来后，停留的时间		*/
+			private var _pause:Pause = new Pause();
+			
+			/**		怪物移动回去的Move对象		*/
+			private var _moveBack:Move = new Move();
+			
+			/**		是否播放音乐效果	例如：怪物出现，怪物挨打，锤子打击的声音	默认是true		*/
+			public var _isMusicEffect:Boolean = true;
+			
+			/**		其他声音控制对象			*/
+			private var _otherSound:SoundEffect = new SoundEffect(this);
+			
+			/**		怪物出现时的嘲笑声						*/
+			private var _emergeSound:SoundEffect = new SoundEffect(this);	
+			
+			/**		锤击点击下去时，发出的锤子滑动空气声		*/
+			private var _clickSound:SoundEffect = new SoundEffect(this);
+			
+			/**		打中怪物，挨打的声音			*/
+			private var _hitSound:SoundEffect = new SoundEffect(this);
+			
+			/**		暂停继续游戏的屏风			*/
+			private var _fadeScreen:Fade = new Fade();
+			
+			/**		暂停继续游戏的屏风，显示成绩单，显示工具栏			*/
+			private var _moveScreen:Move = new Move();
+			
+			/**		暂停继续游戏的屏风			*/
+			public var _zoomScreen:Zoom = new Zoom();
+			
+			/**		设置游戏难度	  默认是easy	三个取值	easy   normal   difficulty		*/
+			public static var _difficulty:String = "easy";
+					
+			/**		怪物出现和回去的延迟时间（毫秒）    默认是300 	*/
+			private var _moveDuration:int = 300;
+			
+			/**		怪物出来后，静止的时间间隔（毫秒）	默认是1000		*/
+			private var _pauseDuration:int = 1000;
+			
+			/**		每个怪物出现的间隔时间		(第一关1000，第二关900，第三关800，一次类推-100)			*/
+			public var _monsterEachDuration:int = 1000;
+			
+			/**		每一关打中的怪物数量		*/
+			public var _hitCount:int = 0;
+			
+			/**		全部打中的怪物数量    	----	从游戏开始，到结束			*/
+			public var _hitCountMember:int = 0;
+			
+			/**		每一关剩余没有打的怪物数量	，第一关要打30只怪物，  游戏关卡数*30			*/
+			public var _remnantCount:int = 0;
+			
+			/**		每一关出现的怪物的总数			*/
+			public var _emergeCount:int = 0;
+			
+			/**		总的出现的怪物总数		------	从游戏开始，到结束				*/
+			public var _emergeCountMember:int = 0;
+			
+			/**		每一关，没有打中的数量				*/
+			public var _missCount:int = 0;
+			
+			/**		没有打中的怪物的总数，	------		从游戏开始到结束		*/
+			public var _missCountMember:int = 0;
+			
+			/**		总分数				*/
+			public var _scoreSum:int = 0;
+			
+			/**		命中率比分比（从游戏开始到结束）		*/
+			private var _hitRateMember:Number = 0;
+			
+			
+//----------------------	成	员	方	法		---------------------------------------------------------------------------
+
+			
+			/**		添加所有怪物到集合中	 */
+			private function setMonsterState():void{
+				// 将所有怪物添加到怪物集合中
+				this._monsterList.addItem(monster1);
+				this._monsterList.addItem(monster2);
+				this._monsterList.addItem(monster3);
+				this._monsterList.addItem(monster4);
+				this._monsterList.addItem(monster5);
+				this._monsterList.addItem(monster6);
+				this._monsterList.addItem(monster7);
+				this._monsterList.addItem(monster8);
+				this._monsterList.addItem(monster9);
+				this._monsterList.addItem(monster10);
+				this._monsterList.addItem(monster11);
+				this._monsterList.addItem(monster12);
+				this._monsterList.addItem(monster13);
+				this._monsterList.addItem(monster14);
+				this._monsterList.addItem(monster15);
+				this._monsterList.addItem(monster16);
+				this._monsterList.addItem(monster17);
+				this._monsterList.addItem(monster18);
+				this._monsterList.addItem(monster19);
+				this._monsterList.addItem(monster20);
+				
+				// 设置所有怪物的相关属性
+				for(var i:int = 0 ; i < this._monsterList.length ; i ++){
+					var monster:Image = this._monsterList[i] as Image;
+					// 隐藏
+					monster.visible = false;
+//					monster.maintainAspectRatio = false;
+					// 给怪物添加单击事件
+					monster.addEventListener(MouseEvent.CLICK,monster_click);
+				}
+				
+			}
+			
+			/**		开始游戏			*/
+			public function startGame():void{
+				
+				// 设置游戏难易度模式
+				this.setGameDifficulty();
+				
+				// 将游戏过程保存到一个变量中，，方便以后暂停游戏
+				this._gameProcess = setInterval(this.monsterEmergeAndBack,this._monsterEachDuration);
+			}
+			
+			/**		所有元素加载完毕之后初始化的方法		*/
+			private function loaded():void{
+				
+				// 初始化所有怪物到集合中 ，  并设置怪物的相关属性
+				this.setMonsterState();
+				
+				// 设置声音的播放持续时间延长
+				this._otherSound.duration = 60*60;
+				this._emergeSound.duration = 60*60;
+				this._hitSound.duration = 60*60;
+				
+			}
+			
+			/**		设置游戏难度			*/
+			private function setGameDifficulty():void{
+				
+				switch(Hit._difficulty){
+					case "easy":
+						this._moveDuration = 300;
+						this._pauseDuration = 1000;
+						break;
+					case "normal":
+						this._moveDuration = 250;
+						this._pauseDuration = 800;
+						break;
+					case "difficulty":
+						this._moveDuration = 150;
+						this._pauseDuration = 500;
+						break;
+					default:
+						this._moveDuration = 300;
+						this._pauseDuration = 1000;
+						break;
+				}
+				
+			}
+			
+			/**		怪物逃跑的嘲笑声，自己判断是那种怪物，具体要播放那种声音，都是自己判断	 	@param monster:怪物，回洞的怪物	*/
+			private function playMonsterFleeSound(monster:Image):void{
+				
+				// 获取逃跑的怪物的原路径
+				var src:String = monster.source.toString();
+				
+				// 判断，怪物是否被打过了，如果被打过了，就不播放逃跑的声音了
+				if(src == "images/mouseHit.png" || src == "images/woniuHit.png" || src == "images/jiangshiHit.png")
+					return;				//  后期，如果要添加新的怪物，就在加一个判断，用  ||  ，如果怪物被打中了就不再继续播放声音，直接返回
+				
+				// 怪物出现，播放嘲笑声
+				if(this._isMusicEffect){
+					// 获取怪物类型
+					var type:int = this.getMonsterTypeBySource(src);
+					
+					// 判断要播放的怪物的声音类型
+					if(type == 1){
+						this._emergeSound.source = "sounds/老鼠跑了.mp3";
+					}else if(type == 2){
+						this._emergeSound.source = "sounds/蜗牛跑了.mp3";
+					}else if(type == 3){		// 这里，后期要添加新的怪物时，也要该这里，新怪物逃跑的声音
+						this._emergeSound.source = "sounds/僵尸跑了.mp3";
+					}
+					
+					//播放，偷跑的声音，，，就不播放声音
+					if(type == 3){				// 如果是僵尸，就延迟播放的时间，因为僵尸出现的时候就延迟了，所以要等僵尸移动回去的时候才播放声音		
+						setTimeout(function():void{
+							// 延迟之后，还要再次判断僵尸是不是被打过了，如果没有被打过，在播放逃跑声音
+							if(monster.source == "images/jiangshi.png")
+								_emergeSound.play();
+						},3000);		// 3000 是因为僵尸出现提示音效需要3秒播放完毕 ，
+					}else{		//  否则，直接播放其他怪物逃跑的声音
+						this._emergeSound.play();
+					}
+				}
+				
+			}
+			
+			/**		怪物出现和回去的方法的特效方法 ， 里面也调用了恢复已回洞的怪物到怪物列表的方法		*/
+			private function monsterEmergeAndBack():void{
+				// 创建一个要出现的怪物的索引
+				var index:int = Math.random()*this._monsterList.length;
+				
+				// 获取怪物，并设置显示
+				var monster:Image = this._monsterList[index];				
+				monster.visible = true;
+				
+				// 随机一个数字，用来判断显示蜗牛还是老鼠
+				var n:int = Math.random()*1000;
+				
+				// 判断随机数，看看是那一中怪物
+				if(n%2==0)		// 显示老鼠
+					monster.source = "images/mouse.png";
+//					monster.source = "images/jiangshi.png";
+				else if(n%3==0)			// 显示蜗牛
+					monster.source = "images/woniu.png";
+//					monster.source = "images/jiangshi.png";
+				else if(n%5==0)
+					monster.source = "images/jiangshi.png";
+				else 
+					monster.source = "images/mouse.png";
+				
+				// 如果是僵尸，就提前播放声音提示玩家，僵尸要出现了
+				if(monster.source == "images/jiangshi.png"){
+					if(this._isMusicEffect){
+						this._otherSound.source = "sounds/僵尸出现了.mp3";
+						this._otherSound.play();
+					}
+				}
+					
+				
+				// 将怪物移动出来			
+				this._moveEmerge.yFrom = monster.y + monster.height;
+				this._moveEmerge.yTo = monster.y;
+				this._moveEmerge.duration = this._moveDuration;
+				
+				// 怪物出现，播放嘲笑声
+				if(this._isMusicEffect){
+					// 定时，播放，逃跑的怪物的声音，，如果被打过了，就不播放声音
+					setTimeout(playMonsterFleeSound,this._moveDuration+this._pauseDuration,monster);					
+				}
+				
+				// 让怪物静止一会
+				this._pause.duration = this._pauseDuration;
+				
+				// 将怪物移动回去		
+				this._moveBack.yTo = monster.y + monster.height;
+				this._moveBack.duration = this._moveDuration;
+				
+				// 设置每个怪物的动画效果，然后播放效果
+				var seq:Sequence = new Sequence(monster);
+				
+				// 如果要出现的怪物是僵尸的话，就暂停一会，等待僵尸提示声效播放完毕
+				if(monster.source == "images/jiangshi.png"){
+					monster.y = monster.y + monster.height;
+					var p:Pause = new Pause(monster);
+					p.duration = 3000;
+					seq.addChild(p);
+				}
+				
+				seq.addChild(this._moveEmerge);
+				seq.addChild(this._pause);
+				seq.addChild(this._moveBack);
+				seq.play();
+				
+				// 执行动画的组合效果（Sequence）放到_curPlayList中（正在播放效果的列表）
+				this._curPlayList.addItem(seq);
+				
+				// 从怪物列表中删除正在执行动画的怪物
+				this._monsterList.removeItemAt(index);
+				// 将出现的怪物放到正在播放效果的怪物集合中（_curPlayMonster）
+				this._curPlayMonster.addItem(monster);
+				
+				// 将已回到洞里的怪物还原到怪物列表中，（_monsterPlay）
+				this.renewMonster();
+				
+				// 增加出现的怪物的数量
+				this.calcMissMonster();
+				
+			}
+			
+			/**		 增加出现的怪物的数量		*/
+			private function calcMissMonster():void{				
+				// 增加出现的怪物的数量
+				this._emergeCount ++;
+				this._emergeCountMember ++;			
+				
+				// 显示出现的怪物数量
+				this._rightTools.emergeCount.text = this.numberToString(this._emergeCount);
+			}
+			
+			/**		更换鼠标工具的图片		*/
+			private function changeCursor():void{
+				cursor.source = "images/cursor_hit.png";
+				
+				// 120毫秒之后，还原锤子的图片
+				setTimeout(function():void{
+					cursor.source = "images/cursor.png";
+					put.visible = false;
+				},120);
+			}
+			
+			/**		恢复已完成动画的怪物到存储怪物的集合中，（_monsterList）		*/
+			private function renewMonster():void{
+				for(var i:int = 0 ; i < this._curPlayList.length ; i ++){
+					// 获取每一个正在执行动作的Sequence对象
+					var seq:Sequence = this._curPlayList[i] as Sequence;
+					// 如果这个对象已经完成动画，就将他删除
+					if(!seq.isPlaying){
+						this._curPlayList.removeItemAt(i);
+						// 获取这个动作的target对象
+						var monster:Image = this._curPlayMonster.removeItemAt(i) as Image;
+						
+						// 获取对象的图片路径
+						var src:String = monster.source.toString();
+						
+						if(src == "images/mouse.png" || src == "images/woniu.png" || src == "images/jiangshi.png"){							
+							// 计算躲过的怪物的数量
+							this._missCount ++;
+							this._missCountMember ++;	
+							
+							// 显示没有打过的怪物数量
+							this._rightTools.missCount.text = this.numberToString(this._missCount);
+							
+						}
+						
+						// 还原显示的怪物
+						monster.source = "images/mouse.png";
+						// 隐藏怪物
+						monster.visible = false;
+						// 添加到怪物集合中，可已再次出现在屏幕上
+						this._monsterList.addItem(monster);
+						
+						// 把怪物还原到初始默认位置
+						var moveRenew:Move = new Move(monster);
+						moveRenew.yTo = monster.y-monster.height;
+						moveRenew.duration = 0;
+						moveRenew.play();
+						
+					}
+				}
+				
+								
+				// 如果击中怪物的数量为0，就显示  0%，否则，计算出，百分比 
+				if(this._hitCount != 0){
+					var hitCount:String = (this._hitCount/(this._emergeCount+0.0)*100)+".";
+					hitCount = hitCount.substring(0,hitCount.indexOf(".")+2);
+					hitCount = hitCount + "00";
+					hitCount = hitCount.substring(0,hitCount.indexOf(".")+2);
+					this._rightTools.hitRate.text = hitCount + "%";
+				}
+				else
+					this._rightTools.hitRate.text = "    0%";
+				
+			}
+			
+			/**		动态加分数，让应该加的分数弹出，然后移动到分数榜中		@param plusScore：要加的分数，必须是两位数字    格式：10、20、30		@param e：鼠标事件的实例，主要用于获取鼠标当前的坐标		*/
+			private function plusScore(plusScore:int,e:MouseEvent):void{
+				
+				var score:String = plusScore.toString();
+				
+				// 将分数分开两个字符串
+				var s1:String = score.charAt(0);
+				var s2:String = score.charAt(1);
+				
+				// 分别创建两个分数图片
+				var i1:Image = new Image();
+				i1.source = "swf/"+s1+".swf";
+				i1.width = 15;
+				i1.height = 15;
+				i1.x = e.stageX+20;
+				i1.y = e.stageY-20;		
+				
+				var i2:Image = new Image();
+				i2.source = "swf/"+s2+".swf";
+				i2.width = 15;
+				i2.height = 15;				
+				i2.x = e.stageX+25+20;
+				i2.y = e.stageY-20;
+				
+				// 添加到页面中
+				this.addElement(i1);
+				this.addElement(i2);
+				
+				// 放大第一个分数图片
+				var z1:Zoom = new Zoom(i1);				
+				z1.zoomHeightTo = 2.0;
+				z1.zoomWidthTo = 2.0;
+				z1.originX = i1.width/2.0;
+				z1.originY = i1.height/2.0;
+				z1.duration = 300;
+				z1.play();
+				
+				// 放大完毕之后，在还原回去，并移动到分数榜
+				setTimeout(function():void{
+					z1.zoomHeightTo = 1.0;
+					z1.zoomWidthTo = 1.0;
+					z1.duration = 300;
+					z1.play();
+					
+					var move:Move = new Move(i1);
+					move.xTo = shiwei.x;
+					move.yTo = shiwei.y;				
+					move.duration = 300;
+					move.play();
+					
+				},300);
+				
+				// 放大第二个分数图片，
+				var z2:Zoom = new Zoom(i2);
+				z2.zoomHeightTo = 2.0;
+				z2.zoomWidthTo = 2.0;
+				z2.originX = i2.width/2.0;
+				z2.originY = i2.height/2.0;
+				z2.duration = 500;
+				z2.play();
+				
+				// 放大完毕之后，还原回原来的大小，并移动图片到分数榜
+				setTimeout(function():void{
+					z2.zoomHeightTo = 1;
+					z2.zoomWidthTo = 1;
+					z2.duration = 300;
+					z2.play();
+					
+					var move:Move = new Move(i2);
+					move.xTo = gewei.x;
+					move.yTo = gewei.y;
+					move.duration = 300;
+					move.play();
+					
+					// 等待动态的分数移动到分数榜后，移除动态的分数
+					setTimeout(function():void{
+						removeElement(i1);
+						removeElement(i2);
+					},250);
+					
+				},400);
+				
+				// 更新分数  和   更新打中怪物的数量
+				setTimeout(updateScore, 600, plusScore);
+				
+			}
+			
+			/**		加分数，加打中怪物的数量		@param plusScore：要加的分数，必须是两位数字    格式：10、20、30		*/
+			private function updateScore(plusScore:int):void{
+				
+				// 在总分上加上分数
+				this._scoreSum += plusScore;
+								
+				// 加分数，转换成字符串
+				var score:String = "000000"+(this._scoreSum);
+				// 获取个位、十位、百位的数字			千位		万位
+				var ge:String = score.charAt(score.length-1);
+				var shi:String = score.charAt(score.length-2);
+				var bai:String = score.charAt(score.length-3);
+				var qian:String = score.charAt(score.length-4);
+				var wan:String = score.charAt(score.length-5);
+				var shiwan:String = score.charAt(score.length-6);
+
+				// 改变显示的分数
+				gewei.source = "swf/"+ge+".swf";
+				shiwei.source = "swf/"+shi+".swf";
+				baiwei.source = "swf/"+bai+".swf";
+				qianwei.source = "swf/"+qian+".swf";
+				wanwei.source = "swf/"+wan+".swf";
+				shiwanwei.source = "swf/"+shiwan+".swf";
+				
+			}
+			
+			/**		将整形数字转换程字符串			*/
+			private function numberToString(num:int):String{
+				
+				// 定义要显示的击中数
+				var str:String = "";
+				
+				// 判断
+				if(num<10)
+					str = "    " + num;
+				else if(num < 100)
+					str = "  " + num;
+				else
+					str = num.toString();
+				
+				return str;
+				
+			}
+				
+			/**		获取怪物类型，传入一个怪物对象（Image）的source属性		，如果是老鼠就返回1，是蜗牛就返回2，什么都不是就返回-1；			*/
+			private function getMonsterTypeBySource(source:String):int{
+				// 判断这个怪物的类型（属于僵尸，还是蜗牛，还是老鼠）
+				switch(source){
+					case "images/mouse.png":
+						return 1;
+						break;
+					case "images/woniu.png":
+						return 2;
+						break;
+					case "images/jiangshi.png":
+						return 3;
+						break;
+				}
+				return -1;
+			}
+			
+			/**		设置暂停游戏			*/
+			private function setPauseScreen():void{
+
+				this.pauseScreen.visible = true;
+				
+//				var rotate:Rotate = new Rotate(this.pauseScreen);
+//				rotate.angleTo = 360;
+//				rotate.duration = 3000;
+//				rotate.play();
+				
+				this._fadeScreen.alphaFrom = 0;
+				this._fadeScreen.alphaTo = 0.5;
+				this._fadeScreen.duration = 1000;
+				this._fadeScreen.target = this.pauseScreen;
+				this._fadeScreen.play();
+				
+				this._zoomScreen.zoomHeightFrom = 0;
+				this._zoomScreen.zoomHeightTo = 1;
+				this._zoomScreen.zoomWidthFrom = 0;
+				this._zoomScreen.zoomWidthTo = 1;
+				this._zoomScreen.originX = this.pauseScreen.width/2.0;
+				this._zoomScreen.originY = this.pauseScreen.height/2.0;
+				this._zoomScreen.duration = 1000;
+				this._zoomScreen.target = this.pauseScreen;
+				this._zoomScreen.play();
+				
+			}
+			
+			/**		还原正在暂停的游戏			*/
+			private function renewGameScreen():void{
+			
+				this._fadeScreen.alphaFrom = 0.5;
+				this._fadeScreen.alphaTo = 0;
+				this._fadeScreen.duration = 1000;
+				this._fadeScreen.target = this.pauseScreen;
+				this._fadeScreen.play();
+				
+				this._zoomScreen.zoomHeightFrom = 1;
+				this._zoomScreen.zoomHeightTo = 0;
+				this._zoomScreen.zoomWidthFrom = 1;
+				this._zoomScreen.zoomWidthTo = 0;
+				this._zoomScreen.originX = this.pauseScreen.width/2.0;
+				this._zoomScreen.originY = this.pauseScreen.height/2.0;
+				this._zoomScreen.duration = 1000;
+				this._zoomScreen.target = this.pauseScreen;
+				this._zoomScreen.play();
+			}
+			
+			/**		暂停游戏				*/
+			public function pauseGame():void
+			{
+				// TODO Auto-generated method stub
+				
+				// 清除正在进行游戏的进程对象	（setInterval）
+				clearInterval(this._gameProcess);
+				
+				
+				// 循环暂停正在执行动画效果的怪物，
+				for(var i:int = 0 ; i < this._curPlayList.length ; i ++){
+					var seq:Sequence = this._curPlayList[i] as Sequence;
+					seq.pause();
+				}
+				
+				// 暂停游戏 ，显示屏风
+				this.setPauseScreen();				
+			}
+			
+			/**		 还原怪物，继续出现怪物			*/
+			private function resumeMonster():void{
+				
+				// 隐藏屏风
+				this.pauseScreen.visible = false;
+				
+				// 循环还原已暂停动画效果的怪物
+				for(var i:int = 0 ; i < this._curPlayList.length ; i ++){
+					var seq:Sequence = this._curPlayList[i] as Sequence;
+					seq.resume();
+				}
+				
+				// 继续开始冒出怪物
+				this.startGame();
+				
+			}
+			
+			/**		继续游戏			*/
+			public function continueGame():void
+			{
+				// TODO Auto-generated method stub
+				
+				// 还原屏风
+				this.renewGameScreen();
+				
+				// 等待屏风完全关闭，继续出现怪物，继续游戏
+				setTimeout(this.resumeMonster,1000);
+				
+			}
+			
+			/**		停止游戏	停止出现怪物		*/
+			private function stopGame():void{
+				
+				// 暂停出怪物
+				clearTimeout(this._gameProcess);
+				
+				// 循环结束正在动画效果的怪物
+				for(var i:int = 0 ; i < this._curPlayList.length ; i ++){
+					var seq:Sequence = this._curPlayList[i] as Sequence;
+					seq.end();
+				}
+				
+			}
+						
+			/**		显示成绩单	，隐藏工具栏		@param isTrue:是否为通关状态下的成绩单，如果为true，显示下一关按钮，如果是false，显示返回游戏，重新开始，图片按钮	*/
+			public function showScoreList(isTrue:Boolean):void{
+				
+				// 判断显示的按钮
+				this.restart.visible = false;
+				this.backGame.visible = false;
+				this.goLevel.visible = false;				
+				if(isTrue){
+					if(this._rightTools._lv == 10){
+						// 这里显示完成按钮........			显示最终的分数
+						this.shiwanwei2.source = this.shiwanwei.source;
+						this.wanwei2.source =  this.wanwei.source;
+						this.qianwei2.source = this.qianwei.source;
+						this.baiwei2.source = this.baiwei.source;
+						this.shiwei2.source = this.shiwei.source;
+						this.gewei2.source = this.gewei.source;
+						// 显示最终的分数
+						this.groScoreByLevel.visible = true;
+					}else{
+						// 显示下一关按钮
+						this.goLevel.visible = true;						
+					}
+				}else{
+					this.restart.visible = true;
+					this.backGame.visible = true;
+				}
+				
+				
+				this.groScoreList.visible = true;
+				
+				// 显示关卡数
+				switch(this._rightTools._lv){
+					case 1:
+						this.lblLevel.text = "第 ① 关";
+						break;
+					case 2:
+						this.lblLevel.text = "第 ② 关";
+						break;
+					case 3:
+						this.lblLevel.text = "第 ③ 关";
+						break;
+					case 4:
+						this.lblLevel.text = "第 ④ 关";
+						break;
+					case 5:
+						this.lblLevel.text = "第 ⑤ 关";
+						break;
+					case 6:
+						this.lblLevel.text = "第 ⑥ 关";
+						break;
+					case 7:
+						this.lblLevel.text = "第 ⑦ 关";
+						break;
+					case 8:
+						this.lblLevel.text = "第 ⑧ 关";
+						break;
+					case 9:
+						this.lblLevel.text = "第 ⑨ 关";
+						break;
+					case 10:
+						this.lblLevel.text = "第 ⑩ 关";
+						break;
+				}
+				
+				// 设置完成度	成绩单
+				this.lblWanCheng.text = StringUtil.trim(this._rightTools.hitCount.text)+"/"+this._rightTools.remnantCount.text;
+				this.lblEmergeCount.text = this._emergeCount.toString();
+				this.lblEmergeCountSum.text = this._emergeCountMember.toString();
+				this.lblMissCount.text = this._missCount.toString();
+				this.lblMissCountSum.text = this._missCountMember.toString();
+				this.lblHitRate.text = StringUtil.trim(this._rightTools.hitRate.text);
+				this._hitRateMember += parseFloat(this.lblHitRate.text);				
+				this.lblHitRateSum.text = ((this._hitRateMember/this._rightTools._lv)+"").substring(0,5)+"%"; // (this._hitCountMember/(this._emergeCountMember+0.0)*100)+"%";
+				
+				
+				// 显示成绩单
+				this._fadeScreen.alphaFrom = 0;
+				this._fadeScreen.alphaTo = 1;
+				this._fadeScreen.duration = 1000;
+				this._fadeScreen.target = this.groScoreList;
+				this._fadeScreen.play();
+				
+				this._zoomScreen.zoomHeightFrom = 0;
+				this._zoomScreen.zoomHeightTo = 1;
+				this._zoomScreen.zoomWidthFrom = 0;
+				this._zoomScreen.zoomWidthTo = 1;
+				this._zoomScreen.originX = this.groScoreList.width/2.0;
+				this._zoomScreen.originY = this.groScoreList.height/2.0;
+				this._zoomScreen.duration = 1000;
+				this._zoomScreen.target = this.groScoreList;
+				this._zoomScreen.play();
+				
+				// 隐藏工具栏
+//				this._moveScreen.xTo = -this._rightTools.width;
+				this._moveScreen.yTo = -this._rightTools.height-50;
+				this._moveScreen.target = this._rightTools;
+				this._moveScreen.duration = 1000;
+				this._moveScreen.play();
+				
+				
+//				this._zoomScreen.zoomHeightFrom = 1;
+//				this._zoomScreen.zoomHeightTo = 0;
+//				this._zoomScreen.zoomWidthFrom = 1;
+//				this._zoomScreen.zoomWidthTo = 0;
+//				this._zoomScreen.originX = this._rightTools.width/2.0;
+//				this._zoomScreen.originY = this._rightTools.height/2.0;
+//				this._zoomScreen.duration = 1000;
+//				this._zoomScreen.target = this._rightTools;
+//				this._zoomScreen.play();
+			}
+			
+			/**		隐藏成绩单	, 显示工具栏	*/
+			private function hideScoreList():void{
+				
+				// 如果点击过了，就不再播放效果，。
+				if(this._zoomScreen.isPlaying)
+					return;
+				
+				// 隐藏成绩单
+				this._fadeScreen.alphaFrom = 1;
+				this._fadeScreen.alphaTo = 0;
+				this._fadeScreen.duration = 1000;
+				this._fadeScreen.target = this.groScoreList;
+				this._fadeScreen.play();
+				
+				this._zoomScreen.zoomHeightFrom = 1;
+				this._zoomScreen.zoomHeightTo = 0;
+				this._zoomScreen.zoomWidthFrom = 1;
+				this._zoomScreen.zoomWidthTo = 0;
+				this._zoomScreen.originX = this.groScoreList.width/2.0;
+				this._zoomScreen.originY = this.groScoreList.height/2.0;
+				this._zoomScreen.duration = 1000;
+				this._zoomScreen.target = this.groScoreList;
+				this._zoomScreen.play();
+				
+				// 显示工具栏
+				this._moveScreen.yTo = 0;
+				this._moveScreen.target = this._rightTools;
+				this._moveScreen.duration = 1000;
+				this._moveScreen.play();
+				
+			}
+			
+			/**		验证分数是否通关，如果满足就通关下一关   (加载成绩单)		*/
+			public function validateNextLevel():Boolean{
+				// 如果完成了必须完成的怪物数量
+				if(parseInt(this._rightTools.hitCount.text) != parseInt(this._rightTools.remnantCount.text))
+					return false;
+				
+				return true;
+				
+//				if(this._hitCount == 3)
+//					return true;		
+//				return false;
+			}
+
+			
+			
+//----------------------	事	件		------------------------------------------------------------------------------------------------------------------------			
+			
+			
+
+			/**		鼠标移动时移动武器的坐标	*/
+			protected function application_mouseMoveHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				
+				Mouse.show();
+				
+				// 如果鼠标移出了程序边界，就隐藏锤子图片
+				if(event.stageX >= this.x+this.width || event.stageX <= this.x || event.stageY >= this.y+this.height || event.stageY <= this.y){
+					cursor.visible = false;
+					return;
+				}
+				
+				// 显示锤子
+				if(!cursor.visible)
+					cursor.visible = true;
+				
+				// 锤子时刻跟随鼠标的移动坐标
+				cursor.x = event.stageX-30;
+				cursor.y = event.stageY-57;
+				
+				//  打中时的效果时刻跟着鼠标移动的坐标
+				put.x = event.stageX;
+				put.y = event.stageY;
+								
+			}
+			
+			/**		鼠标点击时，切换工具图片	*/
+			protected function application_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				
+				// 锤子滑动时的声音
+				if(this._isMusicEffect){
+					this._clickSound.source = "sounds/hitEmpty.mp3";
+					this._clickSound.play();
+				}
+				
+				// 更改锤子的样式
+				this.changeCursor();
+				
+			}
+								
+			/**		单击出现的怪物所引发的事件				*/
+			protected function monster_click(e:MouseEvent):void{
+				
+				// 显示效果，撞击效果
+				put.visible = true;
+				
+				// 获取当前点击的怪物对象
+				var monster:Image = e.currentTarget as Image;
+				
+				// 获取被打中的怪物的原路径
+				var src:String = monster.source.toString();;
+				
+				// 如果已经被点击过了，不执行下面的操作，就直接返回
+				if(src == "images/mouseHit.png" || src == "images/woniuHit.png" || src == "images/jiangshiHit.png")
+					return;
+				
+				// 判断，打中的怪物，是老鼠还是蜗牛，如果是老鼠就返回1，是蜗牛就返回2
+				var monsterType:int = this.getMonsterTypeBySource(src);				
+				
+				// 动态显示加分数
+				if(monsterType == 1){
+					this.plusScore(10,e);
+				}else if(monsterType == 2){
+					this.plusScore(25,e);
+				}else if(monsterType == 3){
+					this.plusScore(50,e);
+				}
+				
+				// 增加打中怪物的数量		,, 怪物在怎么换，打中的数量永远都是1，所以加再多分数，也就多加一个打中的数量
+				this._hitCount ++;
+				this._hitCountMember ++;	
+				
+				// 播放挨打的声音
+				if(this._isMusicEffect){
+					if(monsterType == 1){
+						this._hitSound.source = "sounds/mouseHit.mp3";
+					}else if(monsterType == 2){
+						this._hitSound.source = "sounds/woniuHit.mp3";
+					}else if(monsterType == 3){
+						this._hitSound.source = "sounds/jiangshiHit.mp3";						
+					}
+					this._hitSound.play();
+				}
+				
+				// 改变怪物的图片（被打之后的图片）
+				if(monsterType == 1){
+					monster.source = "images/mouseHit.png";		
+				}else if(monsterType == 2){
+					monster.source = "images/woniuHit.png";
+				}else if(monsterType == 3){
+					monster.source = "images/jiangshiHit.png";
+				}		
+				
+				// 设置击中的怪物数量
+				this._rightTools.hitCount.text = this.numberToString(this._hitCount);
+				
+				// 判断是否通关，满足过关条件
+				if(this.validateNextLevel()){	
+					// 播放获胜音效				
+					if(this._isMusicEffect){
+						this._otherSound.source = "sounds/win.mp3";
+						this._otherSound.play();
+					}
+					// 停止游戏，禁止再次出现怪物
+					this.stopGame();					
+					// 显示成绩单
+					this.showScoreList(true);					
+				}
+				
+			}
+			
+			/**		鼠标移动进入时，更换图片,下一关图片按钮		*/
+			protected function goLevel_mouseOverHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				this.goLevel.source = "images/下一关蓝.png";
+				
+				// 播放声音
+				if(!this._isMusicEffect)
+					return;
+				this._otherSound.source = "sounds/水滴声.mp3";
+				this._otherSound.play();
+			}
+
+			/**		鼠标移除下一关图片按钮时		*/
+			protected function goLevel_mouseOutHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				this.goLevel.source = "images/下一关灰.png";
+			}
+
+			/**		鼠标单击	下一关		图片按钮		*/
+			protected function goLevel_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				
+				// 显示效果
+				this.put.visible = true;
+				
+				// 播放声音
+				if(this._isMusicEffect){
+					this._otherSound.source = "sounds/最小化.mp3";
+					this._otherSound.play();
+				}
+				// 隐藏按钮
+				this.goLevel.visible = false;
+				
+				// 隐藏成绩单
+				this.hideScoreList();
+				
+				// 关卡升级
+				this._rightTools._lv++;
+				
+				// 重新加载右侧的工具栏
+				this._rightTools.loaded();
+				
+			}
+
+			/**		返回游戏图片按钮，鼠标移入改变图片样式			*/
+			protected function goBackGame_mouseOverHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				this.backGame.source = "images/返回游戏蓝.png";
+				
+				// 播放声音
+				if(this._isMusicEffect){					
+					this._otherSound.source = "sounds/水滴声.mp3";
+					this._otherSound.play();
+				}
+			}
+
+			/**		返回游戏图片按钮，鼠标移出，改变图片			*/
+			protected function goBackGame_mouseOutHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				this.backGame.source = "images/返回游戏灰.png";
+				
+				// 播放声音
+				if(this._isMusicEffect){					
+					this._otherSound.source = "sounds/水滴声.mp3";
+					this._otherSound.play();
+				}
+			}
+
+			/**		重新开始图片按钮，鼠标移入，改变背图案		*/
+			protected function goReGame_mouseOverHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				this.restart.source = "images/重新开始蓝.png";
+				
+				// 播放声音
+				if(this._isMusicEffect){					
+					this._otherSound.source = "sounds/水滴声.mp3";
+					this._otherSound.play();
+				}
+			}
+
+			/**		重新开始图片按钮，鼠标移出，改变背景图像		*/
+			protected function goReGame_mouseOutHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				this.restart.source = "images/重新开始灰.png";
+				
+				// 播放声音
+				if(this._isMusicEffect){					
+					this._otherSound.source = "sounds/水滴声.mp3";
+					this._otherSound.play();
+				}
+			}
+
+			/**		返回游戏图片按钮，单击事件，返回游戏，继续游戏		*/
+			protected function goBackGame_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				
+				// 显示效果，pia的一下
+				this.put.visible = true;
+				
+				// 播放声音
+				if(this._isMusicEffect){
+					this._otherSound.source = "sounds/最小化.mp3";
+					this._otherSound.play();
+				}
+				
+				// 更改游戏控制按钮的图片文字				
+				this._rightTools.gameControl.source = "images/gcontinue.png";
+				
+				// 隐藏成绩单
+				this.hideScoreList();
+			}
+
+			/**		重新开始游戏，，单击事件		*/
+			protected function goReGame_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				
+				// 显示效果
+				this.put.visible = true;
+								
+				// 停止播放所有音乐
+				SoundMixer.stopAll();
+				
+				// 播放声音
+				if(this._isMusicEffect){
+					this._otherSound.source = "sounds/重新开始.mp3";
+					this._otherSound.play();
+				}
+				
+				// 重新再次启动一个，上次的并未关闭
+				var sl :MainProgram = MainProgram(PopUpManager.createPopUp(this.parent,MainProgram,true));				
+			}
+
+			/**		全部关卡完成了，就自己重新开始游戏		*/
+			protected function groScoreByLevel_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				// 重新开始游戏
+				this.goReGame_clickHandler(event);
+			}
+
+		]]>
+	</fx:Script>
+	
+	<mx:Image id="bg" source="images/hitbg.jpg" width="500" height="600" maintainAspectRatio="false" x="0" y="0"/>
+	
+	
+	<mx:Image name="monster" id="monster1" source="images/mouse.png"  x="47" y="153" width="83" height="65" />
+	<mx:Image name="monster" id="monster2" source="images/mouse.png"  x="152" y="153" width="83" height="65"/>
+	<mx:Image name="monster" id="monster3" source="images/mouse.png"  x="269" y="154" width="83" height="65"/>
+	<mx:Image name="monster" id="monster4" source="images/mouse.png"  x="372" y="151" width="83" height="65"/>
+	
+	<mx:Image id="shelter1" source="images/shelter1.png" x="0" y="213" />
+	
+	
+	<mx:Image name="monster" id="monster5" source="images/mouse.png"  x="38" y="219" width="83" height="65"/>
+	<mx:Image name="monster" id="monster6" source="images/mouse.png"  x="147" y="219" width="83" height="65"/>
+	<mx:Image name="monster" id="monster7" source="images/mouse.png"  x="262" y="221" width="83" height="65"/>
+	<mx:Image name="monster" id="monster8" source="images/mouse.png"  x="368" y="221" width="83" height="65"/>
+	
+	
+	<mx:Image id="shelter2" source="images/shelter2.png" x="1" y="282" />
+	
+	<mx:Image name="monster" id="monster9" source="images/mouse.png"  x="39" y="291" width="83" height="65"/>
+	<mx:Image name="monster" id="monster10" source="images/mouse.png"  x="146" y="292" width="83" height="65"/>
+	<mx:Image name="monster" id="monster11" source="images/mouse.png"  x="262" y="293" width="83" height="65"/>
+	<mx:Image name="monster" id="monster12" source="images/mouse.png"  x="368" y="293" width="83" height="65"/>
+	
+	
+	<mx:Image id="shelter3" source="images/shelter3.png" x="1" y="353" />
+	
+	<mx:Image name="monster" id="monster13" source="images/mouse.png"  x="45" y="365" width="83" height="65"/>
+	<mx:Image name="monster" id="monster14" source="images/mouse.png"  x="152" y="365" width="83" height="65"/>
+	<mx:Image name="monster" id="monster15" source="images/mouseHit.png"  x="269" y="367" width="83" height="65"/>
+	<mx:Image name="monster" id="monster16" source="images/mouse.png"  x="375" y="366" width="83" height="65"/>
+	
+	
+	<mx:Image id="shelter4" source="images/shelter4.png" x="2" y="426" />
+	
+	<mx:Image name="monster" id="monster17" source="images/woniuHit.png"  x="45" y="436" width="83" height="65"/>
+	<mx:Image name="monster" id="monster18" source="images/woniu.png"  x="154" y="436" width="83" height="65"/>
+	<mx:Image name="monster" id="monster19" source="images/jiangshiHit.png"  x="271" y="438" width="83" height="65"/>
+	<mx:Image name="monster" id="monster20" source="images/jiangshi.png" x="376" y="438" width="83" height="65"/>
+	
+	<mx:Image source="images/woniu.png" x="376" y="437" width="83" height="65" visible="false"/>
+	
+	<mx:Image id="shelter5" source="images/shelter5.png" x="-1" y="498" />
+	
+	<!--	分数榜和分数值		-->
+	<mx:Image id="score" x="91" y="10" width="318" height="86" maintainAspectRatio="true" source="images/score.png"/>
+	<mx:Image id="shiwanwei" x="259" y="59" width="15" height="15" maintainAspectRatio="true" source="swf/0.swf" />
+	<mx:Image id="wanwei" x="284" y="59" width="15" height="15" maintainAspectRatio="true" source="swf/0.swf" />
+	<mx:Image id="qianwei" x="309" y="59" width="15" height="15" maintainAspectRatio="true" source="swf/0.swf" />
+	<mx:Image id="baiwei" x="334" y="59" width="15" height="15" maintainAspectRatio="true" source="swf/0.swf" />
+	<mx:Image id="shiwei" x="359" y="59" width="15" height="15" maintainAspectRatio="true" source="swf/0.swf" />
+	<mx:Image id="gewei" x="384" y="59" width="15" height="15" maintainAspectRatio="true" source="swf/0.swf" />
+			
+	<!--	游戏暂停的屏风图片	-->
+	<mx:Image id="pauseScreen" source="swf/pausegame.swf" width="500" height="600" maintainAspectRatio="false" x="0" y="0" visible="false" />
+	
+	<!--	成绩单，的说明	-->
+	<s:Group id="groScoreList" width="500" height="600" visible="false">
+		<mx:Image source="images/gray.png" width="500" height="600" maintainAspectRatio="false" alpha="0.8"/>		
+		<mx:Image source="images/关卡进程.png" maintainAspectRatio="false" x="78" y="23" width="345" height="58"/>
+		<!--	显示当前关卡数	-->		
+		<s:Label id="lblLevel" x="186" y="97" text="第 一 关" fontSize="32" fontFamily="隶书" color="#DC143C"/>
+		<!--	说明标题	-->
+		<s:Label x="18" y="143" text="本关完成度" fontSize="32" fontFamily="隶书" color="#4169E1"/>
+		<s:Label x="18" y="193" text="本关出现数" fontSize="32" fontFamily="隶书" color="#4169E1"/>
+		<s:Label x="18" y="243" text="总出现数" fontSize="32" fontFamily="隶书" color="#4169E1"/>
+		<s:Label x="18" y="293" text="本关逃跑数" fontSize="32" fontFamily="隶书" color="#4169E1"/>
+		<s:Label x="18" y="343" text="总逃跑数" fontSize="32" fontFamily="隶书" color="#4169E1"/>
+		<s:Label x="18" y="393" text="本关命中率" fontSize="32" fontFamily="隶书" color="#4169E1"/>
+		<s:Label x="18" y="443" text="总命中率" fontSize="32" fontFamily="隶书" color="#4169E1"/>
+		<!--	各个属性值，获得值		-->
+		<s:Label id="lblWanCheng" x="300" y="143" text="000/000" fontSize="32" fontFamily="隶书" />
+		<s:Label id="lblEmergeCount" x="300" y="193" text="000" fontSize="32" fontFamily="隶书" />
+		<s:Label id="lblEmergeCountSum" x="300" y="243" text="000000" fontSize="32" fontFamily="隶书" />
+		<s:Label id="lblMissCount" x="300" y="293" text="0000" fontSize="32" fontFamily="隶书" />
+		<s:Label id="lblMissCountSum" x="300" y="343" text="0000" fontSize="32" fontFamily="隶书" />
+		<s:Label id="lblHitRate" x="300" y="393" text="100%" fontSize="32" fontFamily="隶书" />
+		<s:Label id="lblHitRateSum" x="300" y="443" text="100%" fontSize="32" fontFamily="隶书" />
+		
+		<!--	下一关，游戏按钮		-->
+		<mx:Image id="goLevel" source="images/下一关灰.png" x="187" y="518" visible="true"
+				  mouseOver="goLevel_mouseOverHandler(event)" 
+				  mouseOut="goLevel_mouseOutHandler(event)" 
+				  click="goLevel_clickHandler(event)"/>
+		<!--	返回游戏，图片按钮			-->
+		<mx:Image id="backGame" source="images/返回游戏灰.png" x="293" y="518" 
+				  mouseOver="goBackGame_mouseOverHandler(event)" 
+				  mouseOut="goBackGame_mouseOutHandler(event)" 
+				  click="goBackGame_clickHandler(event)"/>
+		<!--	重新开始，图片按钮		-->
+		<mx:Image id="restart" source="images/重新开始灰.png" x="101" y="518" 
+				  mouseOver="goReGame_mouseOverHandler(event)" 
+				  mouseOut="goReGame_mouseOutHandler(event)" 
+				  click="goReGame_clickHandler(event)"/>
+		<!--	最终的分数		-->
+		<s:Group id="groScoreByLevel" x="90" y="490" visible="false" click="groScoreByLevel_clickHandler(event)">
+			<mx:Image id="score2" x="0" y="0" width="318" height="86" maintainAspectRatio="true" source="images/score.png"/>
+			<mx:Image id="shiwanwei2" x="169" y="49" width="15" height="15" maintainAspectRatio="true" source="swf/0.swf" />
+			<mx:Image id="wanwei2" x="194" y="49" width="15" height="15" maintainAspectRatio="true" source="swf/0.swf" />
+			<mx:Image id="qianwei2" x="219" y="49" width="15" height="15" maintainAspectRatio="true" source="swf/0.swf" />
+			<mx:Image id="baiwei2" x="244" y="49" width="15" height="15" maintainAspectRatio="true" source="swf/0.swf" />
+			<mx:Image id="shiwei2" x="269" y="49" width="15" height="15" maintainAspectRatio="true" source="swf/0.swf" />
+			<mx:Image id="gewei2" x="294" y="49" width="15" height="15" maintainAspectRatio="true" source="swf/0.swf" />			
+		</s:Group>		
+	</s:Group>
+	
+	<!--	锤子鼠标		-->
+	<mx:Image id="put" source="swf/put.swf" visible="false"  x="0" y="0"/>
+	<mx:Image id="cursor" source="images/cursor.png" visible="false" x="0" y="0"/>
+	
+</s:Group>

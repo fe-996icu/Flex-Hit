@@ -1,0 +1,166 @@
+
+
+				在这个程序里面添加新的怪物类型，总共需要修改 com.hit.view.Hit 类中的三个方法和一个事件
+				getMonsterTypeBySource
+				playMonsterFleeSound
+				monsterEmergeAndBack
+				monster_click			---- 事件
+
+
+
+
+
+
+
+	/**		添加新的怪物类型，在这个方法里面先设置好		*/
+	com.hit.view.Hit.getMonsterTypeBySource(source:String):int
+	获取怪物类型，传入一个怪物对象（Image）的source属性 ，如果是老鼠就返回1，
+	是蜗牛就返回2，什么都不是就返回-1；
+	{
+		switch(source){
+			case "images/mouse.png":
+				return 1;
+				break;
+			case "images/woniu.png":
+				return 2;
+				break;
+			}
+			case "新添加的怪物的图片路径，（没有被打之前的图片路径）":
+				return 3;		// 指定新的数字，来代表这个新的怪物序号，以后就用这个数字来代表是哪一种怪物.
+			break;
+			return -1;
+	}
+
+
+
+
+
+
+	//	添加新怪物的逃跑声音
+	com.hit.view.Hit.playMonsterFleeSound(monster:Image):void
+	怪物逃跑的嘲笑声，自己判断是那种怪物，具体要播放那种声音，都是自己判断
+	参数:
+		monster:怪物，回洞的怪物
+		
+		｛
+				// 判断，怪物是否被打过了，如果被打过了，就不播放逃跑的声音了
+				if(src == "images/mouseHit.png" || src == "images/woniuHit.png" || src == "新添加的怪物的被打的图片路径")
+					return;				//  后期，如果要添加新的怪物，就在加一个判断，用  ||  ，如果怪物被打中了就不再继续播放声音，直接返回
+				
+								
+				// 判断要播放的怪物的声音类型
+				if(type == 1){
+					this._emergeSound.source = "sounds/老鼠跑了.mp3";
+				}else if(type == 2){
+					this._emergeSound.source = "sounds/蜗牛跑了.mp3";
+				}else if(type == 新怪物的类型编号){		// 这里，后期要添加新的怪物时，也要该这里，新怪物逃跑的声音
+					this._emergeSound.source = "新添加的怪物的逃跑声音文件路径";
+				}
+				
+		 ｝
+		 
+		 
+		 
+		 
+		// 怪物出现的方法，这里也要做一些修改 
+		com.hit.view.Hit.monsterEmergeAndBack():void
+		怪物出现和回去的方法的特效方法 ， 里面也调用了恢复已回洞的怪物到怪物列表的方法
+		{
+			
+			// 随机一个数字，用来判断显示蜗牛还是老鼠，还是其他的怪物
+			var n:int = Math.random()*100;
+			
+			// 判断随机数，看看是那一中怪物
+			if(n%2!=0)		// 显示蜗牛
+				monster.source = "images/woniu.png";
+			else			// 显示老鼠
+				monster.source = "images/mouse.png";
+			
+			// 上面这个判断，执行判断两种,，完全可以这样替代他
+			{
+				if(n%2==0)		// 显示蜗牛
+					monster.source = "images/woniu.png";
+				else if(n%3==0)			// 显示老鼠
+					monster.source = "images/mouse.png";
+				else if(n%5==0)		// 还可以是7、11、13、17、19、23、29、就是只可以被1和自身整除的数字都行，反正就是一个随机出现的怪物，那一种多出现都无所谓，最后数字越大的怪物，给的分数越多，因为数字越大，出现的几率就越小
+					monster.source = "新添加的怪物的图片位置，没有被打的怪物图片";
+			
+			}
+			
+		}
+		
+		
+		
+		
+		
+		
+		
+		// 还有就是，怪物的单击事件，
+		com.hit.view.Hit.monster_click(e:MouseEvent):void
+		单击出现的怪物所引发的事件
+		{
+		
+			var src:String = monster.source.toString();;
+			
+			// 如果已经被点击过了，不执行下面的操作，就直接返回
+			if(src == "images/mouseHit.png" || src == "images/woniuHit.png" src == "新添加的怪物的图片路径（被打之后显示的图片路径）")
+				return;		
+				
+				
+			
+			// 判断，打中的怪物，是老鼠还是蜗牛，如果是老鼠就返回1，是蜗牛就返回2	
+			var monsterType:int = this.getMonsterTypeBySource(src);				
+			
+			// 动态显示加分数
+			if(monsterType == 1){
+				this.plusScore(10,e);
+			}else if(monsterType == 2){
+				this.plusScore(20,e);
+			}else if(monsterType == 3){		// 这里的数字，取决于你自己开始的时候，给这个类型的怪物定义的数字代号	getMonsterTypeBySource() 方法中定义的数字类型
+				this.plusScore(30,e);
+			}
+			
+			
+			
+			// 播放挨打的声音
+			if(this._isMusicEffect){
+				if(monsterType == 1){
+					this._hitSound.source = "sounds/mouseHit.mp3";
+				}else if(monsterType == 2){
+					this._hitSound.source = "sounds/woniuHit.mp3";
+				}else if(monsterType == 3){		// 这里的数字，和上面的说法一样
+					this._hitSound.source = "新添加的怪物的被打之播放的声音文件路径";
+				}
+				this._hitSound.play();
+			}
+			
+			
+			
+			
+			// 改变怪物的图片（被打之后的图片）
+			if(monsterType == 1){
+				monster.source = "images/mouseHit.png";		
+			}else if(monsterType == 2){
+				monster.source = "images/woniuHit.png";
+			}else if(monsterType == 3){		// 这里的数字，和上面的说法一样
+				monster.source = "新添加的怪物被打之后显示的图片路径";	
+			}
+			
+		}
+		
+		
+		
+		
+		com.hit.view.Hit.renewMonster():void
+		恢复已完成动画的怪物到存储怪物的集合中，（_monsterList）
+		{
+			if(src == "images/mouse.png" || src == "images/woniu.png" || src == "images/jiangshi.png"){							
+				// 计算躲过的怪物的数量
+				this._missCount ++;
+				this._missCountMember ++;	
+				
+				// 显示没有打过的怪物数量
+				this._rightTools.missCount.text = this.numberToString(this._missCount);
+				
+			}
+		}

@@ -1,0 +1,505 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application mouseMove="application_mouseMoveHandler(event)" 
+			   click="application_clickHandler(event)" 
+			   creationComplete="load();" 
+			   xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" 
+			   minWidth="955" minHeight="600" maxHeight="600" maxWidth="500" width="500">
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import flash.sampler.pauseSampling;
+			import flash.utils.clearInterval;
+			import flash.utils.setInterval;
+			import flash.utils.setTimeout;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.effects.Fade;
+			import mx.effects.Move;
+			import mx.effects.Pause;
+			import mx.effects.Rotate;
+			import mx.effects.Sequence;
+			import mx.effects.SoundEffect;
+			import mx.effects.Zoom;
+			
+			
+			
+			
+			/**		存放所有怪物的集合		*/
+			private var _monsterList:ArrayCollection = new ArrayCollection();
+			
+			/**		正在执行动画的怪物集合					*/
+			private var _curPlayMonster:ArrayCollection = new ArrayCollection();
+			
+			/**		存放正在执行过程的组合效果对象（Sequence）		*/
+			private var _curPlayList:ArrayCollection = new ArrayCollection();
+			
+			/**		开始、暂停  游戏的   setInterval()  		*/
+			private var _gameProcess:uint;
+			
+			/**		怪物移动出来的的Move对象		*/			
+			private var _moveEmerge:Move = new Move();
+			
+			/**		怪物移动出来后，停留的时间		*/
+			private var _pause:Pause = new Pause();
+			
+			/**		怪物移动回去的Move对象		*/
+			private var _moveBack:Move = new Move();
+									
+			/**		是否播放音乐效果	例如：怪物出现，怪物挨打，锤子打击的声音	默认是true		*/
+			public var _isMusicEffect:Boolean = true;
+			
+			/**		怪物出现时的嘲笑声						*/
+			private var _emergeSound:SoundEffect = new SoundEffect();	
+			
+			/**		锤击点击下去时，发出的锤子滑动空气声		*/
+			private var _clickSound:SoundEffect = new SoundEffect(this);
+			
+			/**		打中怪物，挨打的声音			*/
+			private var _hitSound:SoundEffect = new SoundEffect(this);
+						
+			/**		怪物出现和回去的延迟时间（毫秒）    默认是300 	*/
+			private var _moveDuration:int = 300;
+			
+			/**		怪物出来后，静止的时间间隔（毫秒）	默认是1000		*/
+			private var _pauseDuration:int = 1000;
+			
+			/**		每个怪物出现的间隔时间		(第一关1000，第二关900，第三关800，一次类推-100)			*/
+			public var _monsterEachDuration:int = 1000;
+			
+			/**		打中的怪物数量		*/
+			public var _hitCount:int = 0;
+			
+			/**		每一关剩余没有打的怪物数量	，第一关要打20只怪物，第二关、第三关25，第四关30	，第五关40			*/
+			public var _remnantCount:int = 20;
+			
+			/**		出现的怪物的总数			*/
+			public var _emergeCount:int = 0;
+			
+			
+			
+			/**		添加所有怪物到集合中	 */
+			private function setMonsterState():void{
+				// 将所有怪物添加到怪物集合中
+				this._monsterList.addItem(monster1);
+				this._monsterList.addItem(monster2);
+				this._monsterList.addItem(monster3);
+				this._monsterList.addItem(monster4);
+				this._monsterList.addItem(monster5);
+				this._monsterList.addItem(monster6);
+				this._monsterList.addItem(monster7);
+				this._monsterList.addItem(monster8);
+				this._monsterList.addItem(monster9);
+				this._monsterList.addItem(monster10);
+				this._monsterList.addItem(monster11);
+				this._monsterList.addItem(monster12);
+				this._monsterList.addItem(monster13);
+				this._monsterList.addItem(monster14);
+				this._monsterList.addItem(monster15);
+				this._monsterList.addItem(monster16);
+				this._monsterList.addItem(monster17);
+				this._monsterList.addItem(monster18);
+				this._monsterList.addItem(monster19);
+				this._monsterList.addItem(monster20);
+				
+				// 设置所有怪物的相关属性
+				for(var i:int = 0 ; i < this._monsterList.length ; i ++){
+					var monster:Image = this._monsterList[i] as Image;
+					// 隐藏
+					monster.visible = false;
+					// 给怪物添加单击事件
+					monster.addEventListener(MouseEvent.CLICK,monster_click);
+				}
+				
+			}
+			
+			/**		开始游戏			*/
+			private function startGame():void{
+				// 将游戏过程保存到一个变量中，，方便以后暂停游戏
+				this._gameProcess = setInterval(this.monsterEmergeAndBack,this._monsterEachDuration);
+			}
+			
+			/**		所有元素加载完毕之后初始化的方法		*/
+			private function load():void{
+				
+				// 初始化所有怪物到集合中 ，  并设置怪物的相关属性
+				this.setMonsterState();
+				
+				// 开始游戏
+				this.startGame();
+				
+			}
+			
+			/**		怪物出现和回去的方法的特效方法 ， 里面也调用了恢复已回洞的怪物到怪物列表的方法		@param index 传进来一个怪物集合的索引，必须是 _monsterList中有的	*/
+			private function monsterEmergeAndBack():void{
+				// 创建一个要出现的怪物的索引
+				var index:int = Math.random()*this._monsterList.length;
+				
+				// 获取怪物，并设置显示
+				var monster:Image = this._monsterList[index];				
+				monster.visible = true;
+				
+				// 将怪物移动出来			
+				this._moveEmerge.yFrom = monster.y + monster.height;
+				this._moveEmerge.yTo = monster.y;
+				this._moveEmerge.duration = this._moveDuration;
+					
+				// 怪物出现，播放嘲笑声
+				if(this._isMusicEffect){
+					
+					this._emergeSound.source = "sounds/嘲笑声.mp3";
+					this._emergeSound.target = monster;
+					
+					// 等待怪物准备回洞的时候在播放嘲笑的声音
+					var p:Pause = new Pause();
+					p.duration = this._moveDuration+this._pauseDuration;
+					
+					// 创建一个次序对象，先等会怪物回洞，然后发出声音
+					var s:Sequence = new Sequence(monster);
+					s.addChild(p);
+					s.addChild(this._emergeSound);
+					s.play();
+				}
+				
+
+				// 让怪物静止一会
+				this._pause.duration = this._pauseDuration;
+				
+				// 将怪物移动回去		
+				this._moveBack.yTo = monster.y + monster.height;
+				this._moveBack.duration = this._moveDuration;
+				
+				
+				// 设置每个怪物的动画效果，然后播放效果
+				var seq:Sequence = new Sequence(monster);
+				seq.addChild(this._moveEmerge);
+				seq.addChild(this._pause);
+				seq.addChild(this._moveBack);
+//				seq.addChild(this._emergeSound);
+				seq.play();
+				
+				// 执行动画的组合效果（Sequence）放到_curPlayList中（正在播放效果的列表）
+				this._curPlayList.addItem(seq);
+				
+				// 从怪物列表中删除正在执行动画的怪物
+				this._monsterList.removeItemAt(index);
+				// 将出现的怪物放到正在播放效果的怪物集合中（_curPlayMonster）
+				this._curPlayMonster.addItem(monster);
+				
+				// 将已回到洞里的怪物还原到怪物列表中，（_monsterPlay）
+				this.renewMonster();
+				
+			}
+			
+			/**		更换鼠标工具的图片		*/
+			private function changeCursor():void{
+				cursor.source = "images/cursor_hit.png";
+				
+				// 120毫秒之后，还原锤子的图片
+				setTimeout(function():void{
+					cursor.source = "images/cursor.png";
+					put.visible = false;
+					},120);
+			}
+			
+			/**		恢复已完成动画的怪物到存储怪物的集合中，（_monsterList）		*/
+			private function renewMonster():void{
+				for(var i:int = 0 ; i < this._curPlayList.length ; i ++){
+					// 获取每一个正在执行动作的Sequence对象
+					var seq:Sequence = this._curPlayList[i] as Sequence;
+					// 如果这个对象已经完成动画，就将他删除
+					if(!seq.isPlaying){
+						this._curPlayList.removeItemAt(i);
+						// 获取这个动作的target对象
+						var monster:Image = this._curPlayMonster.removeItemAt(i) as Image;
+						
+						// 还原显示的怪物
+						monster.source = "images/mouse.png";
+						// 隐藏怪物
+						monster.visible = false;
+						// 添加到怪物集合中，可已再次出现在屏幕上
+						this._monsterList.addItem(monster);
+						
+						// 把怪物还原到初始默认位置
+						var moveRenew:Move = new Move(monster);
+						moveRenew.yTo = monster.y-monster.height;
+						moveRenew.duration = 0;
+						moveRenew.play();
+						
+					}
+				}
+			}
+			
+			/**		动态加分数，让应该加的分数弹出，然后移动到分数榜中		@param score：要加的分数，String类型的		@param e：鼠标事件的实例，主要用于获取鼠标当前的坐标		*/
+			private function plusScore(score:String,e:MouseEvent):void{
+				// 将分数分开两个字符串
+				var s1:String = score.charAt(0);
+				var s2:String = score.charAt(1);
+				
+				// 分别创建两个分数图片
+				var i1:Image = new Image();
+				i1.source = "swf/"+s1+".swf";
+				i1.width = 15;
+				i1.height = 15;
+				i1.x = e.stageX+20;
+				i1.y = e.stageY-20;		
+				
+				var i2:Image = new Image();
+				i2.source = "swf/"+s2+".swf";
+				i2.width = 15;
+				i2.height = 15;				
+				i2.x = e.stageX+25+20;
+				i2.y = e.stageY-20;
+				
+				// 添加到页面中
+				this.addElement(i1);
+				this.addElement(i2);
+				
+				// 放大第一个分数图片
+				var z1:Zoom = new Zoom(i1);				
+				z1.zoomHeightTo = 2.0;
+				z1.zoomWidthTo = 2.0;
+				z1.originX = i1.width/2.0;
+				z1.originY = i1.height/2.0;
+				z1.duration = 300;
+				z1.play();
+				
+				// 放大完毕之后，在还原回去，并移动到分数榜
+				setTimeout(function():void{
+					z1.zoomHeightTo = 1.0;
+					z1.zoomWidthTo = 1.0;
+					z1.duration = 300;
+					z1.play();
+										
+					var move:Move = new Move(i1);
+					move.xTo = gewei.x;
+					move.yTo = gewei.y;				
+					move.duration = 300;
+					move.play();
+					
+				},300);
+				
+				// 放大第二个分数图片，
+				var z2:Zoom = new Zoom(i2);
+				z2.zoomHeightTo = 2.0;
+				z2.zoomWidthTo = 2.0;
+				z2.originX = i2.width/2.0;
+				z2.originY = i2.height/2.0;
+				z2.duration = 500;
+				z2.play();
+				
+				// 放大完毕之后，还原回原来的大小，并移动图片到分数榜
+				setTimeout(function():void{
+					z2.zoomHeightTo = 1;
+					z2.zoomWidthTo = 1;
+					z2.duration = 300;
+					z2.play();
+					
+					var move:Move = new Move(i2);
+					move.xTo = ling.x;
+					move.yTo = ling.y;
+					move.duration = 300;
+					move.play();
+					
+//					setTimeout(function():void{
+//						this.removeElement(i1);
+//						this.removeElement(i2);
+//					},800);
+				},400);
+
+//				Alert.show(this._hitCount.toString());
+//				setTimeout(function():void{
+//					// 获取现在的分数	格式：001 ，长度必须大于3位
+//					var score:String = "00"+(++this._hitCount);
+//					// 获取个位、十位、百位的数字
+//					var ge:String = score.charAt(score.length-1);
+//					var shi:String = score.charAt(score.length-2);
+//					var bai:String = score.charAt(score.length-3);
+////					Alert.show(this._hitCount);
+//					// 改变显示的分数
+//					gewei.source = "swf/"+ge+".swf";
+//					shiwei.source = "swf/"+shi+".swf";
+//					baiwei.source = "swf/"+bai+".swf";				
+//					
+//				},1300);
+				
+			}
+						
+			/**		鼠标移动时移动武器的坐标	*/
+			protected function application_mouseMoveHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				
+				// 如果鼠标移出了程序边界，就隐藏锤子图片
+				if(event.stageX >= this.x+this.width || event.stageX <= this.x || event.stageY >= this.y+this.height || event.stageY <= this.y){
+					cursor.visible = false;
+					return;
+				}
+				
+				// 显示锤子
+				if(!cursor.visible)
+					cursor.visible = true;
+				
+				// 锤子时刻跟随鼠标的移动坐标
+				cursor.x = event.stageX-30;
+				cursor.y = event.stageY-57;
+				
+				//  打中时的效果时刻跟着鼠标移动的坐标
+				put.x = event.stageX;
+				put.y = event.stageY;
+				
+			}
+
+			/**		鼠标点击时，切换工具图片	*/
+			protected function application_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				
+				// 锤子滑动时的声音
+				if(this._isMusicEffect){
+					this._clickSound.source = "sounds/hitEmpty.mp3";
+					this._clickSound.play();
+				}
+				
+				// 更改锤子的样式
+				this.changeCursor();
+				
+			}
+						
+			/**		单击出现的怪物所引发的事件				*/
+			protected function monster_click(e:MouseEvent):void{
+				
+				// 显示效果，撞击效果
+				put.visible = true;
+				
+				// 获取当前点击的怪物对象
+				var monster:Image = e.currentTarget as Image;
+				
+				// 如果已经被点击过了，不执行下面的操作，就直接返回
+				if(monster.source == "images/mouseHit.png")
+					return;
+				
+				// 动态显示加分数
+				this.plusScore("10",e);
+				
+				// 播放挨打的声音
+				if(this._isMusicEffect){
+					this._hitSound.source = "sounds/鸣笛声.mp3";
+					this._hitSound.play();
+				}
+				
+				// 改变怪物的图片（被打之后的图片）
+				monster.source = "images/mouseHit.png";				
+				
+				// 获取现在的分数	格式：001 ，长度必须大于3位
+				var score:String = "00"+(++this._hitCount);
+				// 获取个位、十位、百位的数字
+				var ge:String = score.charAt(score.length-1);
+				var shi:String = score.charAt(score.length-2);
+				var bai:String = score.charAt(score.length-3);
+				
+				// 改变显示的分数
+				gewei.source = "swf/"+ge+".swf";
+				shiwei.source = "swf/"+shi+".swf";
+				baiwei.source = "swf/"+bai+".swf";				
+				
+			}
+
+			/**		暂停游戏				*/
+			protected function button1_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				
+				// 清除正在进行游戏的进程对象	（setInterval）
+				clearInterval(this._gameProcess);
+
+				// 循环暂停正在执行动画效果的怪物，
+				for(var i:int = 0 ; i < this._curPlayList.length ; i ++){
+					var seq:Sequence = this._curPlayList[i] as Sequence;
+					seq.pause();
+				}
+			}
+
+			/**		继续游戏			*/
+			protected function button2_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				
+				// 循环暂停动画效果的怪物
+				for(var i:int = 0 ; i < this._curPlayList.length ; i ++){
+					var seq:Sequence = this._curPlayList[i] as Sequence;
+					seq.resume();
+				}
+				
+				// 继续开始冒出怪物
+				this.startGame();
+				
+			}
+
+		]]>
+	</fx:Script>
+	
+	<mx:Image id="bg" source="images/bg.jpg" width="500" height="600" maintainAspectRatio="false" x="0" y="0"/>
+	
+	
+	<mx:Image name="monster" id="monster1" source="images/mouse.png"  x="47" y="153" width="83" height="65" />
+	<mx:Image name="monster" id="monster2" source="images/mouse.png"  x="152" y="152" width="83" height="65"/>
+	<mx:Image name="monster" id="monster3" source="images/mouse.png"  x="269" y="153" width="83" height="65"/>
+	<mx:Image name="monster" id="monster4" source="images/mouse.png"  x="372" y="150" width="83" height="65"/>
+	
+	<mx:Image id="shelter1" source="images/shelter1.png" x="0" y="213" />
+	
+	
+	<mx:Image name="monster" id="monster5" source="images/mouse.png"  x="38" y="218" width="83" height="65"/>
+	<mx:Image name="monster" id="monster6" source="images/mouse.png"  x="147" y="218" width="83" height="65"/>
+	<mx:Image name="monster" id="monster7" source="images/mouse.png"  x="262" y="219" width="83" height="65"/>
+	<mx:Image name="monster" id="monster8" source="images/mouse.png"  x="368" y="220" width="83" height="65"/>
+	
+	
+	<mx:Image id="shelter2" source="images/shelter2.png" x="1" y="282" />
+	
+	<mx:Image name="monster" id="monster9" source="images/mouse.png"  x="39" y="291" width="83" height="65"/>
+	<mx:Image name="monster" id="monster10" source="images/mouse.png"  x="146" y="291" width="83" height="65"/>
+	<mx:Image name="monster" id="monster11" source="images/mouse.png"  x="262" y="293" width="83" height="65"/>
+	<mx:Image name="monster" id="monster12" source="images/mouse.png"  x="368" y="292" width="83" height="65"/>
+	
+	
+	<mx:Image id="shelter3" source="images/shelter3.png" x="1" y="353" />
+		
+	<mx:Image name="monster" id="monster13" source="images/mouse.png"  x="45" y="363" width="83" height="65"/>
+	<mx:Image name="monster" id="monster14" source="images/mouse.png"  x="152" y="363" width="83" height="65"/>
+	<mx:Image name="monster" id="monster15" source="images/mouse.png"  x="269" y="367" width="83" height="65"/>
+	<mx:Image name="monster" id="monster16" source="images/mouse.png"  x="375" y="366" width="83" height="65"/>
+	
+	
+	<mx:Image id="shelter4" source="images/shelter4.png" x="2" y="426" />
+	
+	<mx:Image name="monster" id="monster17" source="images/mouse.png"  x="45" y="434" width="83" height="65"/>
+	<mx:Image name="monster" id="monster18" source="images/mouse.png"  x="154" y="434" width="83" height="65"/>
+	<mx:Image name="monster" id="monster19" source="images/mouse.png"  x="271" y="437" width="83" height="65"/>
+	<mx:Image name="monster" id="monster20" source="images/mouse.png"  x="376" y="437" width="83" height="65"/>
+	
+	<mx:Image id="shelter5" source="images/shelter5.png" x="-1" y="498" />
+	
+	<mx:Image id="score" x="91" y="10" width="318" height="86" maintainAspectRatio="true" source="images/score.png"/>
+	<mx:Image id="baiwei" x="299" y="59" width="15" height="15" maintainAspectRatio="true" source="swf/0.swf" />
+	<mx:Image id="shiwei" x="324" y="59" width="15" height="15" maintainAspectRatio="true" source="swf/0.swf" />
+	<mx:Image id="gewei" x="349" y="59" width="15" height="15" maintainAspectRatio="true" source="swf/0.swf" />
+	<mx:Image id="ling" x="374" y="59" width="15" height="15" maintainAspectRatio="true" source="swf/0.swf" />
+
+	
+	<mx:Image id="put" source="swf/put.swf" visible="false"  x="0" y="0"/>
+	<mx:Image id="cursor" source="images/cursor.png" visible="false" x="0" y="0"/>
+	
+	<mx:Image source="images/a.png"  width="108" height="116" x="382" y="498"/>
+	
+	<s:Button click="button1_clickHandler(event)" />
+
+	<s:Button label="开始" click="button2_clickHandler(event)"  x="0" y="61"/>
+	
+</s:Application>

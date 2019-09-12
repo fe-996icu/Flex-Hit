@@ -1,0 +1,403 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group creationComplete="loaded();"
+		 mouseMove="group1_mouseMoveHandler(event)"
+		 xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 width="240" 
+		 height="600">
+	<s:layout>
+		<s:BasicLayout/>
+	</s:layout>
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.effects.Fade;
+			import mx.effects.Move;
+			import mx.effects.Rotate;
+			import mx.effects.Sequence;
+			import mx.effects.SoundEffect;
+			
+			
+// ---------------------------		成	员	变	量		-----------------------------------------------------------------
+			
+			/**		Hit类的实例			*/
+			public var _hit:Hit = null;
+			
+			/**		存放所有等级图片的集合	*/
+			private var _starList:ArrayCollection = new ArrayCollection();
+			
+			/**		游戏关数 		*/
+			public var _lv:int = 1;
+			
+			private var _sound:SoundEffect = new SoundEffect(this);
+			
+			
+// -----------------------------	成	员	方	法		------------------------------------------------------------------
+			
+			/**		窗体加载完毕事件			*/
+			public function loaded():void
+			{
+				// TODO Auto-generated method stub
+								
+				// 设置关卡星级
+				this.setLevelStar();
+				
+				// 设置游戏通关条件
+				this.setGameConfig();
+			}
+			
+			/**		设置关卡星级		*/
+			private function setLevelStar():void{
+				// 将所有星级图片，添加到集合中
+				this._starList.removeAll();
+				
+				this._starList.addItem(star1);
+				this._starList.addItem(star2);
+				this._starList.addItem(star3);
+				this._starList.addItem(star4);
+				this._starList.addItem(star5);
+				this._starList.addItem(star6);
+				this._starList.addItem(star7);
+				this._starList.addItem(star8);
+				this._starList.addItem(star9);
+				this._starList.addItem(star10);
+				
+				// 判断，显示的星级
+				for(var i:int = 0 ; i < this._starList.length; i ++){
+					if(i < this._lv)
+						(this._starList[i] as Image).visible = true;
+					else
+						(this._starList[i] as Image).visible = false;
+				}
+				
+				// 设置关卡数，调整难度，	  怪物出现的延迟缩短
+				this._hit._monsterEachDuration = (11-this._lv)*100;
+
+			}
+			
+			/**		设置游戏配置，设置要打的怪物数量和清空打中的怪物数量			*/
+			private function setGameConfig():void{
+				
+//				this.gameDifficulty.text = "";
+				
+				// 设置每一关需要打的怪物数量		游戏关数 * 30
+				this._hit._remnantCount = 30*this._lv;
+				this.remnantCount.text = this._hit._remnantCount.toString();
+				
+				// 设置打中怪物的数量
+				this._hit._hitCount = 0;
+				this.hitCount.text = "    " + this._hit._hitCount.toString();
+				
+				// 设置出现的怪物的数量
+				this._hit._emergeCount = 0;
+				this.emergeCount.text = "    0";
+				
+				// 设置逃跑的怪物的数量
+				this._hit._missCount = 0;
+				this.missCount.text = "    0";
+				
+				// 设置打中怪物的百分比
+				this.hitRate.text = "    0%";
+				
+				// 清空每一关出现的怪物的数量和Miss的怪物的数量
+				this._hit._emergeCount = 0;
+				this._hit._missCount = 0;
+				
+				this.gameControl.source = "images/gstartgame.png";
+			}
+			
+			/**		放大显示的内容    放大1.5倍		@param obj：要放大的对象			*/
+			public function zoomInDisplay(obj:DisplayObject):void{
+				this._hit._zoomScreen.zoomHeightFrom = 1;
+				this._hit._zoomScreen.zoomHeightTo = 1.5;
+				this._hit._zoomScreen.zoomWidthFrom = 1;
+				this._hit._zoomScreen.zoomWidthTo = 1.5;
+				this._hit._zoomScreen.originX = obj.width/2.0;
+				this._hit._zoomScreen.originY = obj.height/2.0;
+				this._hit._zoomScreen.duration = 500;
+				this._hit._zoomScreen.target = obj;
+				if(!this._hit._zoomScreen.isPlaying)
+					this._hit._zoomScreen.play();
+			}
+			
+			/**		还原显示的内容    还原程原来的大小		@param obj：要还原的对象			*/
+			public function zoomOutDisplay(obj:DisplayObject):void{
+				this._hit._zoomScreen.zoomHeightFrom = 1.5;
+				this._hit._zoomScreen.zoomHeightTo = 1;
+				this._hit._zoomScreen.zoomWidthFrom = 1.5;
+				this._hit._zoomScreen.zoomWidthTo = 1;
+				this._hit._zoomScreen.originX = obj.width/2.0;
+				this._hit._zoomScreen.originY = obj.height/2.0;
+				this._hit._zoomScreen.duration = 500;
+				this._hit._zoomScreen.target = obj;
+				if(!this._hit._zoomScreen.isPlaying)
+					this._hit._zoomScreen.play();
+			}
+						
+			
+// --------------------------	事	件		-------------------------------------------------------------------
+			
+			/**		鼠标移入  游戏控制按钮   改变图片背景样式			*/
+			protected function gameControl_mouseOverHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				
+				// 检查是否播放音效
+				if(this._hit._isMusicEffect){
+					this._sound.source = "sounds/水滴声.mp3";
+					this._sound.play();
+				}
+				
+				var src:String = this.gameControl.source.toString();
+											
+				if(src == "images/gstartgame.png"){		
+					this.gameControl.source = "images/bstartgame.png";
+				}else if(src == "images/gpausegame.png"){
+					this.gameControl.source = "images/bpausegame.png";
+				}else if(src == "images/gcontinue.png"){
+					this.gameControl.source = "images/bcontinue.png";
+				}
+				
+				
+			}
+
+			/**		鼠标移出  游戏控制按钮   改变图片背景				*/
+			protected function gameControl_mouseOutHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+								
+				var src:String = this.gameControl.source.toString();
+				
+				if(src == "images/bstartgame.png"){		
+					this.gameControl.source = "images/gstartgame.png";
+				}else if(src == "images/bpausegame.png"){
+					this.gameControl.source = "images/gpausegame.png";
+				}else if(src == "images/bcontinue.png"){
+					this.gameControl.source = "images/gcontinue.png";
+				}
+			}
+
+			/**		鼠标移动时，隐藏鼠标指针				*/
+			protected function group1_mouseMoveHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+								
+				this.cursor_tool.x = event.stageX-this._hit.width+1;
+				this.cursor_tool.y = event.stageY+1;
+				
+				Mouse.hide();
+				
+				switch(Hit._difficulty){
+					case "easy":
+						this.gameDifficulty.text = "简单";
+						break;
+					case "normal":
+						this.gameDifficulty.text = "普通";
+						break;
+					case "difficulty":
+						this.gameDifficulty.text = "冷酷";
+						break;
+				}
+				
+				
+//				if(event.stageX>this.width+this.x || event.stageX<this.x || event.stageY > this.height+this.y || event.stageY < this.y)
+//					cursor_tool.visible = false;
+//				else
+//					cursor_tool.visible = true;
+				
+			}
+
+			/**		鼠标点击时，做出相应处理		开始游戏，暂停，继续			*/
+			protected function gameControl_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				
+				// 判断是否正在    暂停  继续	中
+				if(this._hit._zoomScreen.isPlaying)
+					return;
+				
+				var src:String = this.gameControl.source.toString();
+				
+				if(src == "images/bstartgame.png"){									
+					// 开始游戏
+					this._hit.startGame();					
+					this.gameControl.source = "images/gpausegame.png";
+				}else if(src == "images/bpausegame.png"){
+					// 暂停游戏
+					this._hit.pauseGame();
+					// 播放音效
+					if(this._hit._isMusicEffect){
+						this._sound.source = "sounds/最大化.mp3";
+						this._sound.play();
+					}
+					this.gameControl.source = "images/gcontinue.png";
+				}else if(src == "images/bcontinue.png"){
+					// 继续游戏
+					this._hit.continueGame();
+					// 播放音效
+					if(this._hit._isMusicEffect){
+						this._sound.source = "sounds/最小化.mp3";
+						this._sound.play();
+					}
+					this.gameControl.source = "images/bpausegame.png";
+				}
+				
+			}
+
+			/**		鼠标移入时，放大土图片			*/
+			protected function soundControl_mouseOverHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				
+				this.zoomInDisplay(this.soundControl);
+								
+			}
+
+			/**		音量控制图片按钮        鼠标移出时，缩小还原图片				*/
+			protected function soundControl_mouseOutHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+						
+				this.zoomOutDisplay(this.soundControl);
+				
+			}
+
+			/**		点击，开启关闭声音			*/
+			protected function soundControl_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				
+				this._hit._isMusicEffect = !this._hit._isMusicEffect;
+				
+				if(this._hit._isMusicEffect){
+					this.soundControl.source = "images/soundon.png";
+					// 播放声音
+//					Alert.show(MainProgram._playTime+"");
+					MainProgram._ctrlSound = MainProgram._musicSound.play(MainProgram._playTime,99999999);
+				}else{
+					this.soundControl.source = "images/soundoff.png";					
+					// 记录音乐播放的位置
+					MainProgram._playTime = MainProgram._ctrlSound.position;
+					
+//					Alert.show(MainProgram._ctrlSound.position+"");
+					// 停止播放音乐
+					SoundMixer.stopAll();
+				}
+				
+			}
+
+			/**		主菜单图片按钮，鼠标移入改变图片			*/
+			protected function mainmenu_mouseOverHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				this.mainmenu.source = "images/主菜单蓝.png";
+				
+				// 检查是否播放音效
+				if(this._hit._isMusicEffect){
+					this._sound.source = "sounds/水滴声.mp3";
+					this._sound.play();
+				}
+			}
+
+			/**		主菜单图片按钮，鼠标移动出去，改变图片按钮		*/
+			protected function mainmenu_mouseOutHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				this.mainmenu.source = "images/主菜单灰.png";
+				
+				// 检查是否播放音效
+				if(this._hit._isMusicEffect){
+					this._sound.source = "sounds/水滴声.mp3";
+					this._sound.play();
+				}
+			}
+
+			/**		鼠标单击，主菜单图片按钮事时，返回主菜单			*/
+			protected function mainmenu_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				
+				if(this._hit._zoomScreen.isPlaying)
+					return;
+				
+				// 暂停游戏
+				this._hit.pauseGame();
+								
+				// 显示成绩单
+				this._hit.showScoreList(false);
+				
+				// 播放音效
+				if(!this._hit._isMusicEffect)
+					return;
+				this._sound.source = "sounds/最大化.mp3";
+				this._sound.play();
+				
+			}
+
+		]]>
+	</fx:Script>
+
+	
+	<!--	背景 		-->
+	<mx:Image source="images/gray.png" maintainAspectRatio="false" width="240" height="600" />
+	<mx:Image source="images/line.png" height="600" width="13" maintainAspectRatio="false" />
+	<!--	关卡难度		-->
+	<s:Label x="23" y="19" text="关卡" fontSize="24" fontFamily="隶书" color="white"/>
+	<!--	完成比率		-->
+	<s:Label x="23" y="106" text="完成度" fontSize="24" fontFamily="隶书" color="white"/>
+	<s:Label id="hitCount" x="107" y="110" text="300" fontSize="32"/>
+	<s:Label x="164" y="110" text="/" fontSize="32"/>
+	<s:Label id="remnantCount" x="174" y="110" text="300" fontSize="32"/>
+	<!--	每一关出现的怪物数量			-->
+	<s:Label x="23" y="154" text="出  现" fontSize="24" fontFamily="隶书" color="white"/>
+	<s:Label id="emergeCount" x="137" y="154" text="    0" fontSize="32" color="red"/>
+	<!--	每一关偷跑的怪物数量			-->
+	<s:Label x="23" y="194" text="逃  跑" fontSize="24" fontFamily="隶书" color="white"/>
+	<s:Label id="missCount" x="137" y="194" text="    0" fontSize="32" color="red"/>
+	<!--	命中比率			-->
+	<s:Label x="23" y="234" text="命中率" fontSize="24" fontFamily="隶书" color="white"/>
+	<s:Label id="hitRate" x="107" y="234" text="      0%" fontSize="32" color="red"/>
+	<!-- 	游戏困难度	 -->
+	<s:Label x="23" y="274" text="困难度" fontSize="24" fontFamily="隶书" color="white"/>
+	<s:Label id="gameDifficulty" x="144" y="274" text="" fontSize="32" fontFamily="隶书" />
+	<!--	暂停，还原游戏			 -->
+	<mx:Image id="gameControl" source="images/gstartgame.png" x="63" y="501" 
+			  mouseOver="gameControl_mouseOverHandler(event)" 
+			  mouseOut="gameControl_mouseOutHandler(event)" 
+			  click="gameControl_clickHandler(event)" />
+	<mx:Image id="mainmenu" source="images/主菜单灰.png" x="63" y="549" 
+			  mouseOver="mainmenu_mouseOverHandler(event)" 
+			  mouseOut="mainmenu_mouseOutHandler(event)" 
+			  click="mainmenu_clickHandler(event)" />
+	<!--<s:Label id="pauseGameText" x="75" y="507" text="继续游戏" fontSize="24" fontFamily="隶书" color="#F8F8FF" mouseOver="pauseGameImage_mouseOverHandler(event)" mouseOut="pauseGameImage_mouseOutHandler(event)" />-->
+	
+	<!--	等级  	10个星星	-->
+	<s:Group id="groStars">			
+		<mx:Image id="star1" source="swf/star1.swf"  x="94" y="43" />
+		<mx:Image id="star2" source="swf/star1.swf"  x="124" y="43" />
+		<mx:Image id="star3" source="swf/star1.swf"  x="154" y="43" />
+		<mx:Image id="star4" source="swf/star1.swf"  x="184" y="43" />
+		<mx:Image id="star5" source="swf/star1.swf"  x="214" y="43" />
+		<mx:Image id="star6" source="swf/star1.swf"  x="94" y="73" />
+		<mx:Image id="star7" source="swf/star1.swf"  x="124" y="73" />
+		<mx:Image id="star8" source="swf/star1.swf"  x="154" y="73" />
+		<mx:Image id="star9" source="swf/star1.swf"  x="184" y="73" />
+		<mx:Image id="star10" source="swf/star1.swf"  x="214" y="73" />			
+	</s:Group>
+	
+	<!--	声音控制按钮		-->
+	<mx:Image id="soundControl" source="images/soundon.png" x="94" y="386"
+			  mouseOver="soundControl_mouseOverHandler(event)" 
+			  mouseOut="soundControl_mouseOutHandler(event)" 
+			  click="soundControl_clickHandler(event)" />
+	
+	<!--	代替鼠标指针		-->
+	<mx:Image id="cursor_tool" source="swf/cursor_tool.swf"  x="107" y="313"/>
+</s:Group>

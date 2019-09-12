@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" 
+			   minWidth="955" 
+			   minHeight="600" 
+			   xmlns:local="*" 
+			   width="739">
+	<s:layout>
+		<s:BasicLayout/>
+	</s:layout>
+
+	<mx:Image source="images/111.png"  x="74" y="99"/>
+	<mx:Image source="images/btnleave.gif"  x="300" y="254"/>
+<!--	<s:Label x="314" y="260" text="主 菜 单" fontSize="24" fontFamily="隶书" color="#8E8E93" />  -->
+	<s:Label x="314" y="260" text="重新开始" fontSize="24" fontFamily="隶书" />
+	
+</s:Application>

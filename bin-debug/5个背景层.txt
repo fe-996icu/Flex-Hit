@@ -1,0 +1,9 @@
+
+
+
+	<mx:Image id="shelter1" source="images/shelter1.png" x="0" y="213" />
+	<mx:Image id="shelter2" source="images/shelter2.png" x="1" y="282" />
+	<mx:Image id="shelter3" source="images/shelter3.png" x="1" y="353" />
+	<mx:Image id="shelter4" source="images/shelter4.png" x="2" y="426" />
+	<mx:Image id="shelter5" source="images/shelter5.png" x="-1" y="498" />
+	
