@@ -1,4 +1,4 @@
-# Hit
+# Flex-Hit
 基于Adobe Flex开发的Flash小游戏-打地鼠
 
 2011年8月开发，上传github备份留存
